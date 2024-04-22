@@ -34,9 +34,8 @@ class User:
         self.__nota = self.__soma_notas / self.__quantidade_de_notas 
 
     def confirmPassword(self, password):
-        if password == self.__password:
-            return True
-
+        return True if password == self.__password else False
+        
     def ChangeStatus(self):
         if self.__status == "Online":
             self.__status = "Offline"

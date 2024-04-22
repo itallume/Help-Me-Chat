@@ -43,6 +43,8 @@ class Server:
         Esse método é responsável por aceitar novas conexões de clientes e iniciar uma nova thread para lidar com a comunicação com cada cliente. O loop continua indefinidamente para aceitar várias conexões consecutivas.
         """
         self.setDictionary()
+        UserObject1 = User("itallo", "123456")
+        self.usersHashTable.put(UserObject1.nickname, UserObject1) # abre o server
         clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         clientSocket.bind(("0.0.0.0", self.port))
         clientSocket.listen()
@@ -78,23 +80,20 @@ class Server:
                         for i in range(6): 
                             if i > 4:
                                 break                                                                 
-                            if self.usersHashTable.contains(msg_client[1]) and not self.OnlineUsers.contains(msg_client[1]):
-                                    #retorna um objeto User
-                                if self.usersHashTable.get(msg_client[1]).confirmPassword(msg_client[2]):  # com o metodo confirmPassword da classe User, faz a confirmação da senha
-                                    connection.send("200".encode('utf-8'))
+                            try:
+                                with self.Lock:
+                                    assert self.usersHashTable.get(msg_client[1]).confirmPassword(msg_client[2])  # com o metodo confirmPassword da classe User, faz a confirmação da senha
+                                    assert not self.OnlineUsers.contains(msg_client[1])  #LANÇAR EXCEÇÃO
+                                    
                                     UserObject = self.usersHashTable.get(msg_client[1])
-                                    with self.Lock: 
-                                        self.OnlineUsers.put(msg_client[1], msg_client[1])
-                                    login = True
-                                    break
-                                else:
+                                    self.OnlineUsers.put(msg_client[1], msg_client[1])
+                                connection.send("200".encode('utf-8'))
+                                login = True
+                                break
+                            except Exception as e:
                                     connection.send("201".encode('utf-8')) 
                                     msg_client = connection.recv(4096).decode("utf-8").split(" ")
                                     continue
-                            else:
-                                connection.send("201".encode('utf-8'))
-                                msg_client = connection.recv(4096).decode("utf-8").split(" ") 
-                                continue
                         if login == False:
                             connection.send("299".encode('utf-8'))
                             continue
@@ -120,23 +119,26 @@ class Server:
                     connection.send("555".encode('utf-8')) #Enviar codigo
                     
         while True:
+            try:
                 msg_client = connection.recv(4096).decode("utf-8").split("&")
                 
                 if msg_client[0] == "type":
                     print(msg_client)
                     if msg_client[1] == "undecided":
                         print(msg_client)
-                        if msg_client[3] in ["1","2","3"]:
-                            newChat = Chat(msg_client[2], int(msg_client[3]))# cria um objeto chat com o assunto e a intensidad 
-                            newChat.addOnChat(UserObject.nickname, connection) # adiciona o menbro no chat
-                            chat = newChat
+                        try:
+                            assert msg_client[3] in ["1","2","3"]
+                            chat = Chat(msg_client[2], int(msg_client[3]))# cria um objeto chat com o assunto e a intensidad 
+                            chat.addOnChat(UserObject.nickname, connection) # adiciona o menbro no chat
                             chat.Indeciso = [UserObject.nickname, connection]
                             # usar lock 
-                            threading.Thread(target= self.matchClients, args=(chat, UserObject)).start()
+                            #threading.Thread(target= self.matchClients, args=(chat, UserObject)).start()
                             print
                             break
-                        else:
+                        except Exception as e:
                             connection.send("301".encode('utf-8'))
+                            continue
+                            
                     
                     if msg_client[1] == "counselor": 
                         counselor = InfoCounselor(UserObject.nickname, connection, UserObject.nota)
@@ -147,7 +149,8 @@ class Server:
                             time.sleep(0.2)
                         chat = UserObject.chat # mandar a solicitação de chat aqui
                         break
-                
+            except Exception as e:
+                connection.send("555".encode('utf-8'))
         while True: 
             try:
                 msg_client = connection.recv(4096).decode("utf-8").split("&") # receber a mensagem do cliente e separar o comando do texto

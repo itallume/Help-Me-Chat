@@ -117,7 +117,7 @@ class Client:
         print("1. Indeciso(a)\n2. Conselheiro(a)")
         self.set_type(validate_signup)
         
-    def set_type(self, validate_signup):
+    def set_type(self):
         """
         `set_type` permite ao usuário escolher entre ser Indeciso(a) ou Conselheiro(a). 
         Em seguida, solicita informações adicionais conforme a escolha do usuário (assunto ou espera por um(a) Indeciso(a)), 
@@ -126,10 +126,10 @@ class Client:
         try:
             type = int(input("Escolha: "))
             if type not in [1,2]:
-                self.set_type(validate_signup)
+                self.set_type()
         except Exception:
             print("\nTente novamente, escolha uma opção válida\n")
-            self.set_type(validate_signup)
+            self.set_type()
 
         if type == 1:   
             print("Qual será o assunto? ")
