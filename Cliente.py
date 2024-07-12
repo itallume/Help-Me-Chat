@@ -2,7 +2,6 @@ import socket
 import threading 
 import socket
 import threading
-import sys
 
 
 class Client:
@@ -11,7 +10,6 @@ class Client:
         self.port = port
         self.CodesTranslate = None
         self.conected = False
-        self.lock = threading.Lock()
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
@@ -32,6 +30,7 @@ class Client:
         "261": "Nota inválida",
         "270": "Conectado a um chat",
         "299": "Muitas tentativas de login, tente mais tarde.",
+        "301": "Opção inválida.",
         "555": "Erro no servidor"
 
     }
@@ -43,10 +42,10 @@ class Client:
         Após isso, solicita a escolha do usuário entre login e cadastro e chama o método `validate_choice` para prosseguir.
         """
         self.sock.connect((self.host, self.port))
-        print(f"Conectado ao servidor na porta {self.port}")
-        print("\n\n=============Bem-Vindo ao Conselheiro Virtual!=============\n")
+        #print(f"Conectado ao servidor na porta {self.port}")
+        #print("\n\n=============Bem-Vindo ao Conselheiro Virtual!=============\n")
         self.validate_choice()
-        print("Conexão encerrada.")
+        #print("Conexão encerrada.")
         return
     
     def validate_choice(self):
@@ -56,8 +55,8 @@ class Client:
         Se for cadastro, chama Validate_register.
         """
         
-        print("Escolha uma opção:")
-        print("\n1 - login\n2 - signup\n")
+        #print("Escolha uma opção:")
+        #print("\n1 - login\n2 - signup\n")
 
         try:
             loginChoice = int(input("Opção: "))
@@ -235,14 +234,14 @@ class Client:
         """
         while True:
             try:
-                print("Digite 'Voltar' para retornar ao menu anterior.")
+                #print("Digite 'Voltar' para retornar ao menu anterior.")
                 user = input("\nUsuario: ")
-                if user.upper() == "VOLTAR":
-                    self.validate_choice()
+                #if user.upper() == "VOLTAR":
+               #     self.validate_choice()
                 password = input("Senha: ")
                 
-                if password.upper == "VOLTAR":
-                    self.validate_choice()
+                #if password.upper == "VOLTAR":
+                #    self.validate_choice()
                 response = f"login {user} {password}"
                 return response
             except Exception:
@@ -256,19 +255,19 @@ class Client:
         O método permite que o usuário digite "Voltar" para retornar ao menu anterior durante a entrada de informações.
         """
         try:
-            print("Digite 'Voltar' para retornar ao menu anterior.")
+           # print("Digite 'Voltar' para retornar ao menu anterior.")
             user = input("\nUsuario: ")
-            if user.upper() == "VOLTAR":
-                self.validate_choice()
+           # if user.upper() == "VOLTAR":
+            #    self.validate_choice()
                 
             password = input("Senha: ")
-            if password.upper == "VOLTAR":
-                self.validate_choice()
+            #if password.upper == "VOLTAR":
+            #    self.validate_choice()
                 
             assert len(password) >= 6
             assert len(user) > 0 and len(user) <= 20
         except Exception:
-            print("\nA senha deve conter 6 ou mais caracteres e o Usuario deve conter 1 ou mais caracteres!\n")
+            #print("\nA senha deve conter 6 ou mais caracteres e o Usuario deve conter 1 ou mais caracteres!\n")
             return self.signin()
         response = f"register {user} {password}"
         return response

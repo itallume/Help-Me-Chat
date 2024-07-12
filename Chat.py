@@ -2,7 +2,6 @@ class Chat:
     def __init__(self, assunto:str, intensidade:int):
         self.assunto = assunto
         self.intensidade = intensidade
-        self.clients = []
         self.status = "desconected"
         self.__Indeciso = None
         self.__Conseheiro = None
@@ -25,9 +24,9 @@ class Chat:
         self.__Conseheiro = Conselheiro
 
 
-    def addOnChat(self, nickname, socket):
-        "O método `addOnChat` adiciona um novo participante à lista de clientes de um chat."
-        self.clients.append([nickname, socket])
+    # def addOnChat(self, nickname, socket):
+    #     "O método `addOnChat` adiciona um novo participante à lista de clientes de um chat."
+    #     self.clients.append([nickname, socket])
         
     def getClients(self):
         "O método `getClients` retorna a lista de clientes atualmente presentes no chat."

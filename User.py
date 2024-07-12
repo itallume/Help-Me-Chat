@@ -8,6 +8,7 @@ class User:
         self.__chat = None #ISSO É PROVISÓRIO, APENAS PARA TESTE
         self.__status = "Offline"
         
+        
     @property
     def nickname(self):
         return self.__nickname

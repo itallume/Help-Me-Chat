@@ -15,9 +15,11 @@ class Server:
         self.usersHashTable = ChainingHashTable(20)
         self.AllChats = ChainingHashTable(20)
         self.arvore = BinarySearchTree()
-        self.MinNote = None
+        self.MinNote = self.setDictionary()
         self.Lock = threading.Lock()
         self.OnlineUsers = ChainingHashTable(20) 
+        self.counselorsAvailable = []
+        self.chats = []
         
     def setDictionary(self):
         """ Atribui ao atributo MinNote da classe o dicionário que
@@ -28,7 +30,7 @@ class Server:
                 2 = Intensidade média
                 3 = Intendsidade alta
         """
-        self.MinNote = {
+        return {
             1: 0,
             2: 3,
             3: 6
@@ -42,7 +44,6 @@ class Server:
         Após essas configurações, o método entra em um loop infinito (`while True`) onde aguarda novas conexões de clientes chamando `aceitar_clientes` e passando o socket do servidor como argumento. 
         Esse método é responsável por aceitar novas conexões de clientes e iniciar uma nova thread para lidar com a comunicação com cada cliente. O loop continua indefinidamente para aceitar várias conexões consecutivas.
         """
-        self.setDictionary()
         UserObject1 = User("itallo", "123456")
         self.usersHashTable.put(UserObject1.nickname, UserObject1) # abre o server
         clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -65,7 +66,8 @@ class Server:
         print(f"Conexão estabelecida com {end_client}")
         
         threading.Thread(target=self.clientComunication, args=(connection,)).start()
-        
+    
+    
     def clientComunication(self, connection):
         """
         O método gerencia a comunicação entre servidor e cliente. 
@@ -77,9 +79,7 @@ class Server:
                     # criar um while para o login e cadastro
                     if msg_client[0] == "login":   # fazer a tentativa maxima de 10 login por nome de usuário 
                         login = False   
-                        for i in range(6): 
-                            if i > 4:
-                                break                                                                 
+                        for i in range(6):                                                               
                             try:
                                 with self.Lock:
                                     assert self.usersHashTable.get(msg_client[1]).confirmPassword(msg_client[2])  # com o metodo confirmPassword da classe User, faz a confirmação da senha
@@ -121,19 +121,16 @@ class Server:
         while True:
             try:
                 msg_client = connection.recv(4096).decode("utf-8").split("&")
-                
                 if msg_client[0] == "type":
-                    print(msg_client)
                     if msg_client[1] == "undecided":
-                        print(msg_client)
                         try:
                             assert msg_client[3] in ["1","2","3"]
                             chat = Chat(msg_client[2], int(msg_client[3]))# cria um objeto chat com o assunto e a intensidad 
-                            chat.addOnChat(UserObject.nickname, connection) # adiciona o menbro no chat
                             chat.Indeciso = [UserObject.nickname, connection]
+                            with self.Lock:
+                                self.chats.append(chat)
                             # usar lock 
                             #threading.Thread(target= self.matchClients, args=(chat, UserObject)).start()
-                            print
                             break
                         except Exception as e:
                             connection.send("301".encode('utf-8'))
@@ -143,8 +140,9 @@ class Server:
                     if msg_client[1] == "counselor": 
                         counselor = InfoCounselor(UserObject.nickname, connection, UserObject.nota)
                         with self.Lock:
-                            self.arvore.add(counselor)
+                            self.counselorsAvailable.append(counselor)
                         # fazer as de solicitações de escolha de chat para o conselheiro 
+                        threading.Thread(target= self.enterOnChat, args=(counselor, UserObject, connection)).start()
                         while UserObject.chat is None:
                             time.sleep(0.2)
                         chat = UserObject.chat # mandar a solicitação de chat aqui
@@ -167,7 +165,7 @@ class Server:
                             participants[1].send(f"{response}".encode('utf-8')) #talvez cause bug
                             connection.close()
                         break
-                    
+                
                     else:
                         for participants in chat.getClients():
                             
@@ -176,6 +174,11 @@ class Server:
             except ConnectionResetError as e:
                 print("Ouve um erro na conexão!")
                  
+
+    def enterOnChat(self, connection, UserObject):
+        for chat in self.chats:
+            if self.MinNote[chat.intensidade] < UserObject.nota:
+                chat.Conselheiro = [UserObject.nickName, connection]
                 
         
     def matchClients(self, chat, UserObject):
