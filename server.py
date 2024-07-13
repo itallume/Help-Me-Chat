@@ -83,7 +83,7 @@ class Server:
                             try:
                                 with self.Lock:
                                     assert self.usersHashTable.get(msg_client[1]).confirmPassword(msg_client[2])  # com o metodo confirmPassword da classe User, faz a confirmação da senha
-                                    assert not self.OnlineUsers.contains(msg_client[1])  #LANÇAR EXCEÇÃO
+                                    #assert not self.OnlineUsers.contains(msg_client[1])  #LANÇAR EXCEÇÃO
                                     
                                     UserObject = self.usersHashTable.get(msg_client[1])
                                     self.OnlineUsers.put(msg_client[1], msg_client[1])
@@ -96,7 +96,8 @@ class Server:
                                     continue
                         if login == False:
                             connection.send("299".encode('utf-8'))
-                            continue
+                            connection.close()
+                            return
                         break
                     
                  #Enviar codigo

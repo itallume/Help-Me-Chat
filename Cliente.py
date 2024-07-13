@@ -2,7 +2,7 @@ import socket
 import threading 
 import socket
 import threading
-
+from Exceptions import *
 
 class Client:
     def __init__(self, host, port):
@@ -12,6 +12,7 @@ class Client:
         self.conected = False
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((self.host, self.port))
+        self.setDict()
 
     def setDict(self):
 
@@ -19,7 +20,7 @@ class Client:
         "200": "login efetuado",
         "201": "Usuário ou senha incorreto",
         "210": "Cadastro efetuado",
-        "211": "Nome de usuário já existente",
+        "211": "Nome de usuário já existente, tente outro",
         "220": "Tipo setado",
         "221": "Tipo inexistente",
         "230": "Tema definido",
@@ -35,32 +36,42 @@ class Client:
 
     }
         
-
-    def Validate_login(self, userName, password):
-        """
-        `Validate_login` inicia o processo de login, envia as credenciais ao servidor, trata diferentes códigos de resposta, 
-        e, em caso de sucesso, permite ao usuário escolher entre ser um Indeciso(a) ou Conselheiro(a), chamando `set_type`. 
-        Em caso de falha, solicita novas credenciais.
-        """
-        
-        log = self.login()
+    def getTranslate(self, code:str) -> str:
+        try:
+            translate = self.CodesTranslate[code]
+            
+        except KeyError:
+            return None
+        return translate
+    
+    def Validate_login(self, userName:str, password:str):
+        """ Parameters: userName:str, password:str
+            Returns: server response code str
+            codes that can be returned: "200", "201", "299"
+            these codes can be translated into the .getTranslate(enterCodeHere) method 
+        """    
+        log = f"login {userName} {password}"
         self.sock.send(log.encode("utf-8"))
-        validate_login = self.sock.recv(1024).decode("utf-8").split(" ")
-        if validate_login[0] == "200": 
-            print(validate_login) #Login efetuado com Sucesso!
+        serverResponse = self.sock.recv(1024).decode("utf-8")
+        if serverResponse == "299":
+            self.sock.close()
+        return serverResponse
+    
+        # if validate_login[0] == "200": 
+        #     print(validate_login) #Login efetuado com Sucesso!
         
-        if validate_login[0] == "299": 
-            print(validate_login)
-            self.Validate_login()
+        # if validate_login[0] == "299": 
+        #     print(validate_login)
+        #     self.Validate_login()
 
-        while validate_login[0] == "201":
-             #translate bug 
-            print(self.CodesTranslate[validate_login[0]]) #Login nao efetuado, Usuário ou Senha incorretos!
-            self.Validate_login()
+        # while validate_login[0] == "201":
+        #      #translate bug 
+        #     print(self.CodesTranslate[validate_login[0]]) #Login nao efetuado, Usuário ou Senha incorretos!
+        #     self.Validate_login()
         
-        print(f"Servidor: {validate_login}")
-        print("1. Indeciso(a)\n2. Conselheiro")
-        self.set_type()
+        # print(f"Servidor: {validate_login}")
+        # print("1. Indeciso(a)\n2. Conselheiro")
+        # self.set_type()
 
     def Validate_register(self, userName, password):
         """
@@ -68,46 +79,48 @@ class Client:
           em caso de sucesso, permite ao usuário escolher entre ser um Indeciso(a) ou Conselheiro(a), chamando `set_type`. 
           Em caso de falha (nome de usuário já existente), solicita novas informações de registro.
         """
-        signup = self.signin()
+        signup = f"register {userName} {password}"
         self.sock.send(signup.encode("utf-8"))
-        validate_signup = self.sock.recv(4096).decode("utf-8").split(" ")
-        if validate_signup[0] == "210":
-            print("\n",self.CodesTranslate[validate_signup[0]]) #Cadastro efetuado com Sucesso!
+        validate_signup = self.sock.recv(4096).decode("utf-8")
+        return validate_signup
+    
+        # if validate_signup[0] == "210":
+        #     print("\n",self.CodesTranslate[validate_signup[0]]) #Cadastro efetuado com Sucesso!
             
-        while validate_signup[0] == "211": 
-            print("\n",self.CodesTranslate[validate_signup[0]])
-            print("Tente Novamente\n") #Nome de Usuario ja Existente, tente novamente!
-            self.Validate_register()
+        # while validate_signup[0] == "211": 
+        #     print("\n",self.CodesTranslate[validate_signup[0]])
+        #     print("Tente Novamente\n") #Nome de Usuario ja Existente, tente novamente!
+        #     self.Validate_register()
         
-        print(f"Servidor: {validate_signup}")
-        print("1. Indeciso(a)\n2. Conselheiro(a)")
-        self.set_type(validate_signup)
+        # print(f"Servidor: {validate_signup}")
+        # print("1. Indeciso(a)\n2. Conselheiro(a)")
+        # self.set_type(validate_signup)
         
-    def set_type(self):
+    def setTypeCounselor(self) -> str:
         """
         `set_type` permite ao usuário escolher entre ser Indeciso(a) ou Conselheiro(a). 
         Em seguida, solicita informações adicionais conforme a escolha do usuário (assunto ou espera por um(a) Indeciso(a)), 
         chamando métodos apropriados como `set_assunto` ou `waitingConnection`.
         """
-        try:
-            type = int(input("Escolha: "))
-            if type not in [1,2]:
-                self.set_type()
-        except Exception:
-            print("\nTente novamente, escolha uma opção válida\n")
-            self.set_type()
+        self.sock.send(f"type&counselor".encode("utf-8"))
+        response_server = self.sock.recv(4096).decode("utf-8")
+        return response_server
+    
+    def setTypeUndecided(self, subject:str, intensity:str) -> str:
 
-        if type == 1:   
-            print("Qual será o assunto? ")
-            self.set_assunto()
-            return
+        self.sock.send(f"type&undecided&{subject}&{intensity}".encode("utf-8"))
+        response_server = self.sock.recv(4096).decode("utf-8")
+        return response_server
         
-        if type == 2:
-            print("\nEsperando por um(a) Indeciso(a)...\n")
-            self.sock.send(f"type&counselor".encode("utf-8"))
-            response_server = self.sock.recv(4096).decode("utf-8").split("&")
+        if response_server[0] == "231":
+            print(self.CodesTranslate[response_server[0]])
+            self.set_intensity(assunto, self.sock)
+        else:
+            print("\nProcurando por um(a) Indeciso(a)...\n")
             self.waitingConnection(response_server)
             return
+
+
         
     def set_assunto(self):
         """
@@ -116,7 +129,6 @@ class Client:
         Em seguida, pede ao usuário que escolha a intensidade do assunto e chama o método `set_intensity` passando o assunto como argumento.
         """
         try:
-            assunto = input()
             assert len(assunto) > 0
             if len(assunto) <= 3:
                 self.set_assunto()
@@ -127,31 +139,7 @@ class Client:
         print("Escolha a intensidade:\n1: Baixa\n2: Média\n3: Alta")
         self.set_intensity(assunto)
         return
-
-    def set_intensity(self, assunto):
-        """
-        `set_intensity` solicita ao usuário que forneça a intensidade do assunto. 
-        Usa um loop para garantir que a entrada seja válida (1, 2 ou 3) e, em seguida, envia a informação para o servidor, esperando uma resposta. 
-        Se a resposta indicar que a intensidade escolhida não é aceitável (código 231), solicita novamente a intensidade. 
-        Se for uma resposta válida, chama o método `waitingConnection` passando a resposta do servidor como argumento.
-        """   
-        while True:
-            try:
-                intensidade = int(input("Intensidade: "))
-                
-                self.sock.send(f"type&undecided&{assunto}&{intensidade}".encode("utf-8"))
-                response_server = self.sock.recv(4096).decode("utf-8").split("&")
-                print("linha 132", response_server)
-                if response_server[0] == "231":
-                    print(self.CodesTranslate[response_server[0]])
-                    self.set_intensity(assunto, self.sock)
-                else:
-                    print("\nProcurando por um(a) Indeciso(a)...\n")
-                    self.waitingConnection(response_server)
-                    return
-            except Exception:
-                print("\nEscolha uma intensidade válida (1, 2 ou 3)!\n")
-
+        
     def waitingConnection(self, response_server):   
         """
         `waitingConnection` é responsável por lidar com a resposta do servidor após solicitar a criação de um chat ou ao entrar em um chat existente. 
@@ -226,32 +214,79 @@ class Client:
 
 
 client = Client("localhost", 12345)
-client.setDict() 
-client.start_client()
-
 print(f"Conectado ao servidor na porta {client.port}")
 print("\n\n=============Bem-Vindo ao Conselheiro Virtual!=============\n")
-while True:
+try:
     while True:
-        try:
+        login = False
+        while True:
             print("Escolha uma opção:")
             print("\n1 - login\n2 - signup\n")
             loginChoice = input("Opção: ")
-            assert loginChoice in ["1", "2"], "Digite uma opção válida"     
+            if loginChoice not in ["1", "2"]:  
+                print("Digite uma opção válida (1 ou 2)" )
+                continue
+            
+            while True:
+                print("Digite 'Voltar' em qualquer campo para retornar ao menu anterior.")
+                userName = input("\nUsuario: ")
+                if userName.upper() == "VOLTAR":
+                    break
+                password = input("Senha: ")
+                if password.upper() == "VOLTAR":
+                    break
+                if loginChoice == "1":
+                    responseCode = client.Validate_login(userName, password)
+                    msgTranslate = client.getTranslate(responseCode)
+                    print(msgTranslate)
+                    if responseCode == "200":
+                        login = True
+                        break
+                    elif responseCode == "299":
+                        raise MuitasTentativas(msgTranslate)
+                    else:
+                        continue
+                else:
+                    responseCode = client.Validate_register(userName, password)
+                    msgTranslate = client.getTranslate(responseCode)
+                    print(msgTranslate)
+                    if responseCode == "210":
+                        login = True
+                        break
+                    else: 
+                        continue
+            if login:
+                break              
+        if login:
             break
-        except Exception as e:
-            print(e)
-
-        print("Digite 'Voltar' em qualquer campo para retornar ao menu anterior.")
-        userName = input("\nUsuario: ")
-        if userName.upper() == "VOLTAR":
-            continue
-        password = input("Senha: ")
-        if password.upper == "VOLTAR":
-            continue
         
-        if loginChoice == 1:
-            client.Validate_login(userName, password)
-        else:
-            client.Validate_register(userName, password)
-    
+    print()
+
+    while True:
+        
+        print("O que deseja ser? ")
+        print("1. Indeciso(a)\n2. Conselheiro")
+        type = input("Escolha (1/2): ")
+        if type not in ["1", "2"]:  
+            print("Digite uma opção válida (1 ou 2)" )
+            continue
+
+        if type == "1":   
+            while True:
+                assunto = input("Qual será o assunto? ")
+                print("Escolha a intensidade:\n1: Baixa\n2: Média\n3: Alta")
+                intensidade = input("Intensidade: ")
+                if intensidade not in ["1", "2", "3"]:
+                    print("Escolha uma opção válida (1, 2 ou 3)")
+                    continue
+                responseCode = client.setTypeUndecided(assunto, intensidade)
+                if responseCode == "231":
+                    print(client.getTranslate(responseCode))
+                    continue
+                
+                #fazer parte de conectar no chat
+                
+        elif type == "2":
+            print("\nEsperando por um(a) Indeciso(a)...\n")
+except MuitasTentativas as e:
+    print("")
