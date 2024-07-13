@@ -1,0 +1,9 @@
+#Servidor 
+
+[ ] Isolar os escopos de conversa para conselheiros e indecisos 
+[ ] Parar de usar lista para armazenar alguns dados da classe
+
+#cliente
+
+[ ] Implementar o main 
+[ ] Ajustar os métodos

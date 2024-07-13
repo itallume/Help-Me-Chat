@@ -11,7 +11,7 @@ class Client:
         self.CodesTranslate = None
         self.conected = False
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+        self.sock.connect((self.host, self.port))
 
     def setDict(self):
 
@@ -34,42 +34,9 @@ class Client:
         "555": "Erro no servidor"
 
     }
-
-    def start_client(self):
-        """
-        `É responsável por iniciar a conexão do cliente com o servidor, exibindo uma mensagem de boas-vindas e 
-        opções de login e cadastro. 
-        Após isso, solicita a escolha do usuário entre login e cadastro e chama o método `validate_choice` para prosseguir.
-        """
-        self.sock.connect((self.host, self.port))
-        #print(f"Conectado ao servidor na porta {self.port}")
-        #print("\n\n=============Bem-Vindo ao Conselheiro Virtual!=============\n")
-        self.validate_choice()
-        #print("Conexão encerrada.")
-        return
-    
-    def validate_choice(self):
-        """
-        validate_choice recebe a escolha do usuário (login ou cadastro) e, em caso de entrada inválida, solicita novamente. 
-        Se a escolha for login, chama Validate_login.
-        Se for cadastro, chama Validate_register.
-        """
         
-        #print("Escolha uma opção:")
-        #print("\n1 - login\n2 - signup\n")
 
-        try:
-            loginChoice = int(input("Opção: "))
-        except Exception:
-            print("Não foi possivel Logar, tente novamente")
-            return self.validate_choice()
-
-        if loginChoice == 1:
-            self.Validate_login()
-        elif loginChoice == 2:
-            self.Validate_register()
-
-    def Validate_login(self):
+    def Validate_login(self, userName, password):
         """
         `Validate_login` inicia o processo de login, envia as credenciais ao servidor, trata diferentes códigos de resposta, 
         e, em caso de sucesso, permite ao usuário escolher entre ser um Indeciso(a) ou Conselheiro(a), chamando `set_type`. 
@@ -95,7 +62,7 @@ class Client:
         print("1. Indeciso(a)\n2. Conselheiro")
         self.set_type()
 
-    def Validate_register(self):
+    def Validate_register(self, userName, password):
         """
         `Validate_register` inicia o processo de registro, envia as informações ao servidor, trata diferentes códigos de resposta e,
           em caso de sucesso, permite ao usuário escolher entre ser um Indeciso(a) ou Conselheiro(a), chamando `set_type`. 
@@ -232,21 +199,6 @@ class Client:
         Ele fica em um loop até que as credenciais sejam fornecidas corretamente, ou o usuário decida voltar ao menu anterior digitando "Voltar". 
         O método retorna a mensagem de login formatada.
         """
-        while True:
-            try:
-                #print("Digite 'Voltar' para retornar ao menu anterior.")
-                user = input("\nUsuario: ")
-                #if user.upper() == "VOLTAR":
-               #     self.validate_choice()
-                password = input("Senha: ")
-                
-                #if password.upper == "VOLTAR":
-                #    self.validate_choice()
-                response = f"login {user} {password}"
-                return response
-            except Exception:
-                
-                break
 
     def signin(self):
         """
@@ -276,3 +228,30 @@ class Client:
 client = Client("localhost", 12345)
 client.setDict() 
 client.start_client()
+
+print(f"Conectado ao servidor na porta {client.port}")
+print("\n\n=============Bem-Vindo ao Conselheiro Virtual!=============\n")
+while True:
+    while True:
+        try:
+            print("Escolha uma opção:")
+            print("\n1 - login\n2 - signup\n")
+            loginChoice = input("Opção: ")
+            assert loginChoice in ["1", "2"], "Digite uma opção válida"     
+            break
+        except Exception as e:
+            print(e)
+
+        print("Digite 'Voltar' em qualquer campo para retornar ao menu anterior.")
+        userName = input("\nUsuario: ")
+        if userName.upper() == "VOLTAR":
+            continue
+        password = input("Senha: ")
+        if password.upper == "VOLTAR":
+            continue
+        
+        if loginChoice == 1:
+            client.Validate_login(userName, password)
+        else:
+            client.Validate_register(userName, password)
+    
