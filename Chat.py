@@ -3,17 +3,17 @@ class Chat:
         self.assunto = assunto
         self.intensidade = intensidade
         self.status = "desconected"
-        self.__Indeciso = None
+        self.__undecided = None
         self.__Conseheiro = None
 
 
     @property
-    def Indeciso(self):
-        return self.__Indeciso
+    def undecided(self):
+        return self.__undecided
     
-    @Indeciso.setter
-    def Indeciso (self, Indeciso):
-        self.__Indeciso = Indeciso
+    @undecided.setter
+    def undecided (self, undecided):
+        self.__undecided = undecided
 
     @property
     def Conselheiro(self):
