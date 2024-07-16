@@ -129,6 +129,15 @@ class Server:
                             chat.undecided = [userObject.nickname, connection]
                             with self.Lock:
                                 self.chats.append(chat)
+                            while True:
+                                time.sleep(0.2)
+                                with self.Lock:
+                                    if chat.counselor is not None:
+                                        print("antes de remover: ", len(self.chats))
+                                        self.chats.remove(chat)
+                                        print("dps de remover: ", len(self.chats))
+                                        break
+                            self.undecidedChat(chat, connection, userObject)
                             # usar lock
                             #threading.Thread(target= self.matchClients, args=(chat, userObject)).start()
                             break
@@ -180,9 +189,6 @@ class Server:
             for chat in self.chats:
                 if userObject.nota >= self.MinNote[chat.intensidade]:
                     chat.Conselheiro = [userObject.nickName, connection]
-                    print("antes de remover: ", len(self.chats))
-                    self.chats.remove(chat)
-                    print("dps de remover: ", len(self.chats))
                     return chat
 
     def councelorChat(self, chat, connection, userObject):
@@ -197,8 +203,17 @@ class Server:
                 
             #adicionar uma opção de saida do chat para um conselheiro
             
-    def undecidedChat(self):
-        pass
+    def undecidedChat(self, chat, connection, userObject):
+        
+        counselorSocket = chat.counselor
+        counselorSocket.send(f"270&{chat.assunto}&{chat.intensidade}".encode('utf-8'))
+        
+        while True:
+            msg_client = connection.recv(4096).decode("utf-8").split("&")
+            if msg_client[0] == "msg":
+                counselorSocket.send(f"240&{userObject.nickname}: {msg_client[1]}".encode('utf-8'))
+            
+            #adicionar uma opção de saida do chat
             
     def matchClients(self, chat, userObject):
         """
