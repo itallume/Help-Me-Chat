@@ -129,14 +129,8 @@ class Server:
                             chat.undecided = [userObject.nickname, connection]
                             with self.Lock:
                                 self.chats.append(chat)
-                            while True:
-                                time.sleep(0.2)
-                                with self.Lock:
-                                    if chat.counselor is not None:
-                                        print("antes de remover: ", len(self.chats))
-                                        self.chats.remove(chat)
-                                        print("dps de remover: ", len(self.chats))
-                                        break
+                            while chat.counselor is None:
+                                time.sleep(0.2)    
                             self.undecidedChat(chat, connection, userObject)
                             # usar lock
                             #threading.Thread(target= self.matchClients, args=(chat, userObject)).start()
@@ -182,14 +176,21 @@ class Server:
 
 
     def enterOnChat(self, connection, userObject):
-
-        with self.Lock:
-            while len(self.chats) == 0:
-                time.sleep(0.2)
-            for chat in self.chats:
-                if userObject.nota >= self.MinNote[chat.intensidade]:
-                    chat.Conselheiro = [userObject.nickName, connection]
-                    return chat
+       
+        while True:
+            with self.Lock:
+                if len(self.chats) == 0:           
+                    time.sleep(0.2)
+                else:
+                    for chat in self.chats:
+                        if userObject.nota >= self.MinNote[chat.intensidade]:
+                            chat.counselor = [userObject.nickName, connection] #subtituir por entidades ex: counselor
+                            print("antes de remover: ", len(self.chats))
+                            self.chats.remove(chat)
+                            print("dps de remover: ", len(self.chats))
+                            return chat
+                    
+        
 
     def councelorChat(self, chat, connection, userObject):
         
@@ -199,7 +200,7 @@ class Server:
         while True:
             msg_client = connection.recv(4096).decode("utf-8").split("&")
             if msg_client[0] == "msg":
-                undecidedSocket.send(f"240&{userObject.nickname}: {msg_client[1]}".encode('utf-8'))
+                undecidedSocket.send(f"240&{userObject.nickname}&{msg_client[1]}".encode('utf-8'))
                 
             #adicionar uma opção de saida do chat para um conselheiro
             
@@ -211,8 +212,9 @@ class Server:
         while True:
             msg_client = connection.recv(4096).decode("utf-8").split("&")
             if msg_client[0] == "msg":
-                counselorSocket.send(f"240&{userObject.nickname}: {msg_client[1]}".encode('utf-8'))
-            
+                counselorSocket.send(f"240&{userObject.nickname}&{msg_client[1]}".encode('utf-8'))
+            else:
+                counselorSocket.send(f"250".encode('utf-8'))
             #adicionar uma opção de saida do chat
             
     def matchClients(self, chat, userObject):

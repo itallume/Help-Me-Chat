@@ -26,7 +26,7 @@ class Client:
         "230": "Tema definido",
         "231": "Intensidade inexistente", 
         "240": "Comunicação feita",
-        "250": "Desconectado",
+        "250": "O chat foi encerrado",
         "260": "Nota apurada",
         "261": "Nota inválida",
         "270": "Conectado a um chat",

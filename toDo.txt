@@ -1,9 +1,10 @@
 #Servidor 
 
-[ ] Isolar os escopos de conversa para conselheiros e indecisos 
+[X] Isolar os escopos de conversa para conselheiros e indecisos 
 [ ] Parar de usar lista para armazenar alguns dados da classe
+[ ] Classes para indeciso e conselheiro, para melhor gerenciamento no chat
 
 #cliente
 
-[ ] Implementar o main 
+[-] Implementar o main 
 [ ] Ajustar os métodos
