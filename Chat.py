@@ -6,7 +6,7 @@ class Chat:
         self.__intensity = intensity
         self.__undecided = None
         self.__counselor = None
-
+        
 
     @property
     def undecided(self) -> Undecided:
@@ -40,3 +40,6 @@ class Chat:
     def intensity(self, intensity:int):
         self.__intensity = intensity
         
+        
+    def __str__(self) -> str:
+        return f"""[Subject: {self.__subject}, Intensity: {self.__intensity}, Counselor username: {self.__counselor.username}, Undecided username: {self.__undecided.username}]"""

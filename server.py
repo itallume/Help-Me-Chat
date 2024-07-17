@@ -192,27 +192,35 @@ class Server:
         
 
     def councelorChat(self, chat, connection):
-        
-        undecidedSocket = chat.undecided.socket
-        undecidedSocket.send(f"270&{chat.subject}&{chat.intensity}".encode('utf-8'))
-        
-        while True:
-            msg_client = connection.recv(4096).decode("utf-8").split("&")
-            if msg_client[0] == "msg":
-                undecidedSocket.send(f"240&{chat.undecided.username}&{msg_client[1]}".encode('utf-8'))
-                
-            #adicionar uma opção de saida do chat para um conselheiro
+        try:
+            undecidedSocket = chat.undecided.socket
+            undecidedSocket.send(f"270&{chat.subject}&{chat.intensity}".encode('utf-8'))
+
+            while True:
+                msg_client = connection.recv(4096).decode("utf-8").split("&")
+                if msg_client[0] == "msg":
+                    undecidedSocket.send(f"240&{chat.undecided.username}&{msg_client[1]}".encode('utf-8'))
+        except ConnectionResetError:
+            print("Erro de conexão, finalizando o chat: ", chat)
+            connection.close()
+            undecidedSocket.send(f"250".encode('utf-8'))
+                #adicionar uma opção de saida do chat para um conselheiro
             
     def undecidedChat(self, chat, connection):
-        counselorSocket = chat.counselor.socket
-        counselorSocket.send(f"270&{chat.subject}&{chat.intensity}".encode('utf-8'))
-        
-        while True:
-            msg_client = connection.recv(4096).decode("utf-8").split("&")
-            if msg_client[0] == "msg":
-                counselorSocket.send(f"240&{chat.counselor.username}&{msg_client[1]}".encode('utf-8'))
-            else:
-                counselorSocket.send(f"250".encode('utf-8'))
+        try:
+            counselorSocket = chat.counselor.socket
+            counselorSocket.send(f"270&{chat.subject}&{chat.intensity}".encode('utf-8'))
+
+            while True:
+                msg_client = connection.recv(4096).decode("utf-8").split("&")
+                if msg_client[0] == "msg":
+                    counselorSocket.send(f"240&{chat.counselor.username}&{msg_client[1]}".encode('utf-8'))
+                else:
+                    counselorSocket.send(f"250".encode('utf-8'))
+        except ConnectionResetError:
+            print("Erro de conexão, finalizando o chat: ", chat)
+            connection.close()
+            counselorSocket.send(f"250".encode('utf-8'))
             #adicionar uma opção de saida do chat
         
 servidor = Server("0.0.0.0", 12345)
