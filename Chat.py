@@ -1,46 +1,42 @@
+import Undecided
+import Counselor
 class Chat:
-    def __init__(self, assunto:str, intensidade:int):
-        self.assunto = assunto
-        self.intensidade = intensidade
-        self.status = "desconected"
+    def __init__(self, subject:str, intensity:int):
+        self.__subject = subject
+        self.__intensity = intensity
         self.__undecided = None
-        self.__Conseheiro = None
+        self.__counselor = None
 
 
     @property
-    def undecided(self):
+    def undecided(self) -> Undecided:
         return self.__undecided
     
     @undecided.setter
-    def undecided (self, undecided):
+    def undecided (self, undecided:Undecided):
         self.__undecided = undecided
 
     @property
-    def Conselheiro(self):
-        return self.__Conseheiro
+    def counselor(self) -> Counselor:
+        return self.__counselor
 
-    @Conselheiro.setter
-    def Conselheiro(self, Conselheiro):
-        self.__Conseheiro = Conselheiro
+    @counselor.setter
+    def counselor(self, counselor:Counselor):
+        self.__counselor = counselor
 
+    @property
+    def subject(self) -> str:
+        return self.__subject
 
-    # def addOnChat(self, nickname, socket):
-    #     "O método `addOnChat` adiciona um novo participante à lista de clientes de um chat."
-    #     self.clients.append([nickname, socket])
-        
-    def getClients(self):
-        "O método `getClients` retorna a lista de clientes atualmente presentes no chat."
-        usersOnChat = []
-        for user in self.clients:
-            usersOnChat.append(user)
-        return usersOnChat
+    @subject.setter
+    def subject(self, subject:str):
+        self.__subject = subject
     
-    def changeStatus(self):
-        "O método `changeStatus` altera o status do chat entre desconectado e ativo. muda o status atual do chat e retorna o novo status."
+    @property
+    def intensity(self) -> int:
+        return self.__intensity
+
+    @intensity.setter
+    def intensity(self, intensity:int):
+        self.__intensity = intensity
         
-        if self.status == "desconected":
-            self.status = "active"
-        else:
-            self.status = "desconected"
-            
-        return self.status

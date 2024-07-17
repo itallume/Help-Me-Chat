@@ -2,7 +2,8 @@
 
 [X] Isolar os escopos de conversa para conselheiros e indecisos 
 [ ] Parar de usar lista para armazenar alguns dados da classe
-[ ] Classes para indeciso e conselheiro, para melhor gerenciamento no chat
+[X] Classes para indeciso e conselheiro, para melhor gerenciamento no chat
+[ ] Melhorar as exceções de disconect
 
 #cliente
 

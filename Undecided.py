@@ -1,4 +1,4 @@
-class Counselor:
+class Undecided:
     def __init__(self, username, socket) -> None:
         self.__username = username
         self.__socket = socket

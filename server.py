@@ -5,6 +5,8 @@ from BinarySearchTree import BinarySearchTree
 from User import User
 from Chat import Chat
 import time
+import Undecided
+import Counselor
 from InfoCounselor import InfoCounselor
 
 
@@ -122,24 +124,21 @@ class Server:
             try:
                 msg_client = connection.recv(4096).decode("utf-8").split("&")
                 if msg_client[0] == "type":
-                    if msg_client[1] == "undecided":
-                        try:
-                            assert msg_client[3] in ["1","2","3"]
-                            chat = Chat(msg_client[2], int(msg_client[3]))# cria um objeto chat com o assunto e a intensidad
-                            chat.undecided = [userObject.nickname, connection]
-                            with self.Lock:
-                                self.chats.append(chat)
-                            while chat.counselor is None:
-                                time.sleep(0.2)    
-                            self.undecidedChat(chat, connection, userObject)
-                            # usar lock
-                            #threading.Thread(target= self.matchClients, args=(chat, userObject)).start()
-                            break
-                        except Exception as e:
+                    if msg_client[1] == "undecided":                      
+                        if msg_client[3] not in ["1","2","3"]:
                             connection.send("301".encode('utf-8'))
                             continue
-
-
+                        chat = Chat(msg_client[2], int(msg_client[3]))# cria um objeto chat com o assunto e a intensidad
+                        chat.undecided = Undecided(userObject.nickname, connection)
+                        with self.Lock:
+                            self.chats.append(chat)
+                        while chat.counselor is None:
+                            time.sleep(0.2)    
+                        self.undecidedChat(chat, connection)
+                        # usar lock
+                        #threading.Thread(target= self.matchClients, args=(chat, userObject)).start()
+                        break
+                    
                     if msg_client[1] == "counselor":
                         # fazer as de solicitações de escolha de chat para o conselheiro
                         chat = self.enterOnChat(connection, userObject)
@@ -184,7 +183,7 @@ class Server:
                 else:
                     for chat in self.chats:
                         if userObject.nota >= self.MinNote[chat.intensidade]:
-                            chat.counselor = [userObject.nickName, connection] #subtituir por entidades ex: counselor
+                            chat.counselor = Counselor(userObject.nickName, connection)
                             print("antes de remover: ", len(self.chats))
                             self.chats.remove(chat)
                             print("dps de remover: ", len(self.chats))
@@ -192,57 +191,29 @@ class Server:
                     
         
 
-    def councelorChat(self, chat, connection, userObject):
+    def councelorChat(self, chat, connection):
         
-        undecidedSocket = chat.undecided
-        undecidedSocket.send(f"270&{chat.assunto}&{chat.intensidade}".encode('utf-8'))
+        undecidedSocket = chat.undecided.socket
+        undecidedSocket.send(f"270&{chat.subject}&{chat.intensity}".encode('utf-8'))
         
         while True:
             msg_client = connection.recv(4096).decode("utf-8").split("&")
             if msg_client[0] == "msg":
-                undecidedSocket.send(f"240&{userObject.nickname}&{msg_client[1]}".encode('utf-8'))
+                undecidedSocket.send(f"240&{chat.undecided.username}&{msg_client[1]}".encode('utf-8'))
                 
             #adicionar uma opção de saida do chat para um conselheiro
             
-    def undecidedChat(self, chat, connection, userObject):
-        
-        counselorSocket = chat.counselor
-        counselorSocket.send(f"270&{chat.assunto}&{chat.intensidade}".encode('utf-8'))
+    def undecidedChat(self, chat, connection):
+        counselorSocket = chat.counselor.socket
+        counselorSocket.send(f"270&{chat.subject}&{chat.intensity}".encode('utf-8'))
         
         while True:
             msg_client = connection.recv(4096).decode("utf-8").split("&")
             if msg_client[0] == "msg":
-                counselorSocket.send(f"240&{userObject.nickname}&{msg_client[1]}".encode('utf-8'))
+                counselorSocket.send(f"240&{chat.counselor.username}&{msg_client[1]}".encode('utf-8'))
             else:
                 counselorSocket.send(f"250".encode('utf-8'))
             #adicionar uma opção de saida do chat
-            
-    def matchClients(self, chat, userObject):
-        """
-        O método `matchClients` é responsável por emparelhar os usuários com base em suas preferências e disponibilidade.
-        Ele utiliza a árvore de conselheiros para encontrar um conselheiro disponível com a nota mínima necessária para participar do chat.
-        Após encontrar um conselheiro adequado, o método atualiza as informações do chat e notifica todos os membros sobre o início da sessão, enviando detalhes como o assunto e a intensidade do chat.
-        """
-        minNote = self.MinNote[chat.intensidade]
-
-        while len(self.arvore) == 0:
-            time.sleep(0.2)
-
-        minNote = InfoCounselor(None, None, minNote)
-
-        counselor = self.arvore.GetEqualOrMajor(minNote)
-        undecided = userObject
-        with self.Lock:
-            print(self.arvore.deleteNode(counselor).nickname)
-        chat.addOnChat(counselor.nickname, counselor.socket)
-        self.usersHashTable.get(counselor.nickname).chat = chat
-        self.usersHashTable.get(undecided.nickname).chat = chat
-        clients_socktes = chat.getClients()
-        for connection in clients_socktes:
-            connection[1].send(f"270&{chat.assunto}&{chat.intensidade}".encode('utf-8'))
-        return
-
-
-
+        
 servidor = Server("0.0.0.0", 12345)
 servidor.start_server()
