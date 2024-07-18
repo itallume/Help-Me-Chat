@@ -25,11 +25,11 @@ class Client:
         "221": "Tipo inexistente",
         "230": "Tema definido",
         "231": "Intensidade inexistente", 
+        "233": "Assunto inválido",
         "240": "Comunicação feita",
-        "250": "O chat foi encerrado",
-        "260": "Nota apurada",
+        "250": "Conectado a um chat",
         "261": "Nota inválida",
-        "270": "Conectado a um chat",
+        "270": "O chat foi encerrado",
         "299": "Muitas tentativas de login, tente mais tarde.",
         "301": "Opção inválida.",
         "555": "Erro no servidor"
@@ -164,8 +164,8 @@ class Client:
         """
         while True:
             response_server = self.sock.recv(4096).decode("utf-8").split("&")
-            if not response_server[0] == "250":
-                print(response_server[1])
+            if not response_server[0] == "270":
+                print(response_server[1], ": ", response_server[2])
             else:
                 print("VOCE FOI DESCONECTADO!!!")
                 self.conected = False 
@@ -177,9 +177,11 @@ class Client:
         Ele permanece em um loop enquanto `conected` for verdadeiro, aguardando a entrada do usuário e enviando a mensagem para o servidor formatada com o código "msg". 
         Este método é interrompido quando o usuário decide encerrar o chat ou é desconectado do servidor.
         """
-        while self.conected: 
-                msg = input(">> ")
-                self.sock.send(f"msg&{msg}".encode("utf-8"))
+        while True: 
+            if self.conected:
+                break
+            msg = input(">> ")
+            self.sock.send(f"msg&{msg}".encode("utf-8"))
 
     def login(self): 
         """
@@ -280,13 +282,20 @@ try:
                     print("Escolha uma opção válida (1, 2 ou 3)")
                     continue
                 responseCode = client.setTypeUndecided(assunto, intensidade)
-                if responseCode == "231":
+                if responseCode == "231" or responseCode == "233":
                     print(client.getTranslate(responseCode))
                     continue
-                
-                #fazer parte de conectar no chat
-                
-        elif type == "2":
-            print("\nEsperando por um(a) Indeciso(a)...\n")
+                else:
+                    print(responseCode)
+                    threading.Thread(target=client.escutar, args=()).start()
+                    client.DigitOnchat()
+                    break
+                #fazer parte de conectar no chat          
+        else:
+            responseCode = client.setTypeCounselor()
+            print(responseCode)
+            threading.Thread(target=client.escutar, args=()).start()
+            client.DigitOnchat()
+            break
 except MuitasTentativas as e:
     print("")

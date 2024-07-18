@@ -5,10 +5,8 @@ from BinarySearchTree import BinarySearchTree
 from User import User
 from Chat import Chat
 import time
-import Undecided
-import Counselor
-from InfoCounselor import InfoCounselor
-
+from Undecided import Undecided
+from Counselor import Counselor
 
 class Server:
     def __init__(self, adress:str , porta:int):
@@ -121,12 +119,15 @@ class Server:
                     connection.send("555".encode('utf-8')) #Enviar codigo
 
         while True:
-            try:
+            
                 msg_client = connection.recv(4096).decode("utf-8").split("&")
                 if msg_client[0] == "type":
                     if msg_client[1] == "undecided":                      
                         if msg_client[3] not in ["1","2","3"]:
-                            connection.send("301".encode('utf-8'))
+                            connection.send("231".encode('utf-8'))
+                            continue
+                        if len(msg_client[2]) < 2:
+                            connection.send("233".encode('utf-8'))
                             continue
                         chat = Chat(msg_client[2], int(msg_client[3]))# cria um objeto chat com o assunto e a intensidad
                         chat.undecided = Undecided(userObject.nickname, connection)
@@ -142,37 +143,34 @@ class Server:
                     if msg_client[1] == "counselor":
                         # fazer as de solicitações de escolha de chat para o conselheiro
                         chat = self.enterOnChat(connection, userObject)
-                        self.councelorChat(chat, connection, userObject)
-                        # threading.Thread(target= self.enterOnChat, args=(counselor, userObject, connection)).start()
+                        self.councelorChat(chat, connection)
                         
                         break
-            except Exception as e:
-                connection.send("555".encode('utf-8'))
-        while True:
-            try:
-                msg_client = connection.recv(4096).decode("utf-8").split("&") # receber a mensagem do cliente e separar o comando do texto
-                print(msg_client)
-             #Enviar codigo
+            
+        # while True:
+        #     try:
+        #         msg_client = connection.recv(4096).decode("utf-8").split("&") # receber a mensagem do cliente e separar o comando do texto
+        #         print(msg_client)
+        #      #Enviar codigo
 
-                if msg_client[0] == "msg":
-                    if msg_client[1].lower() == 'exit': #subtituir por uma forma de que venha no cabeçalho, não é trabalho do usuário digitar isso, e sim do cliente achar uma maneira de notificar
-                        print(f"Desconectado: {userObject.nickname}")
-                        response = '250'
-                        for participants in chat.getClients():
-                            with self.Lock:
-                                self.OnlineUsers.remove(participants[0])
-                            participants[1].send(f"{response}".encode('utf-8')) #talvez cause bug
-                            connection.close()
-                        break
+        #         if msg_client[0] == "msg":
+        #             if msg_client[1].lower() == 'exit': #subtituir por uma forma de que venha no cabeçalho, não é trabalho do usuário digitar isso, e sim do cliente achar uma maneira de notificar
+        #                 print(f"Desconectado: {userObject.nickname}")
+        #                 response = '250'
+        #                 for participants in chat.getClients():
+        #                     with self.Lock:
+        #                         self.OnlineUsers.remove(participants[0])
+        #                     participants[1].send(f"{response}".encode('utf-8')) #talvez cause bug
+        #                     connection.close()
+        #                 break
 
-                    else:
-                        for participants in chat.getClients():
+        #             else:
+        #                 for participants in chat.getClients():
 
-                            participants[1].send(f"240&{userObject.nickname}: {msg_client[1]}".encode('utf-8'))
+        #                     participants[1].send(f"240&{userObject.nickname}: {msg_client[1]}".encode('utf-8'))
 
-            except ConnectionResetError as e:
-                print("Ouve um erro na conexão!")
-
+        #     except ConnectionResetError as e:
+        #         print("Ouve um erro na conexão!")
 
     def enterOnChat(self, connection, userObject):
        
@@ -182,8 +180,8 @@ class Server:
                     time.sleep(0.2)
                 else:
                     for chat in self.chats:
-                        if userObject.nota >= self.MinNote[chat.intensidade]:
-                            chat.counselor = Counselor(userObject.nickName, connection)
+                        if userObject.nota >= self.MinNote[chat.intensity]:
+                            chat.counselor = Counselor(userObject.nickname, connection)
                             print("antes de remover: ", len(self.chats))
                             self.chats.remove(chat)
                             print("dps de remover: ", len(self.chats))
@@ -194,7 +192,7 @@ class Server:
     def councelorChat(self, chat, connection):
         try:
             undecidedSocket = chat.undecided.socket
-            undecidedSocket.send(f"270&{chat.subject}&{chat.intensity}".encode('utf-8'))
+            undecidedSocket.send(f"250&{chat.subject}&{chat.intensity}".encode('utf-8'))
 
             while True:
                 msg_client = connection.recv(4096).decode("utf-8").split("&")
@@ -203,13 +201,13 @@ class Server:
         except ConnectionResetError:
             print("Erro de conexão, finalizando o chat: ", chat)
             connection.close()
-            undecidedSocket.send(f"250".encode('utf-8'))
+            undecidedSocket.send(f"270".encode('utf-8'))
                 #adicionar uma opção de saida do chat para um conselheiro
             
     def undecidedChat(self, chat, connection):
         try:
             counselorSocket = chat.counselor.socket
-            counselorSocket.send(f"270&{chat.subject}&{chat.intensity}".encode('utf-8'))
+            counselorSocket.send(f"250&{chat.subject}&{chat.intensity}".encode('utf-8'))
 
             while True:
                 msg_client = connection.recv(4096).decode("utf-8").split("&")
@@ -220,7 +218,7 @@ class Server:
         except ConnectionResetError:
             print("Erro de conexão, finalizando o chat: ", chat)
             connection.close()
-            counselorSocket.send(f"250".encode('utf-8'))
+            counselorSocket.send(f"270".encode('utf-8'))
             #adicionar uma opção de saida do chat
         
 servidor = Server("0.0.0.0", 12345)
