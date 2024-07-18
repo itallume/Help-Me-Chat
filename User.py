@@ -2,10 +2,8 @@ class User:
     def __init__(self, nickname, password):
         self.__nickname = nickname
         self.__password = password
-        self.__soma_notas = 10  # inicia com 10
         self.__quantidade_de_notas = 0
         self.__nota = 10
-        self.__chat = None #ISSO É PROVISÓRIO, APENAS PARA TESTE
         self.__status = "Offline"
         
         
@@ -30,9 +28,11 @@ class User:
         self.__chat = newchat
     
     def addNota(self, new_nota):
-        self.__soma_notas += new_nota
+        if self.__quantidade_de_notas == 0:
+            self.__nota = 0
+        self.__nota += new_nota
         self.__quantidade_de_notas += 1
-        self.__nota = self.__soma_notas / self.__quantidade_de_notas 
+        self.__nota = self.__nota / self.__quantidade_de_notas 
 
     def confirmPassword(self, password):
         return password == self.__password 
