@@ -17,8 +17,10 @@ class Client:
     def setDict(self):
 
         self.CodesTranslate = {
+        "198": "Voltado ao menu de escolha de login",
         "200": "login efetuado",
         "201": "Usuário ou senha incorreto",
+        "203": "Usuário já está online",
         "210": "Cadastro efetuado",
         "211": "Nome de usuário já existente, tente outro",
         "220": "Tipo setado",
@@ -39,7 +41,6 @@ class Client:
     def getTranslate(self, code:str) -> str:
         try:
             translate = self.CodesTranslate[code]
-            
         except KeyError:
             return None
         return translate
@@ -214,6 +215,9 @@ class Client:
         response = f"register {user} {password}"
         return response
 
+    def backToLoginChoice(self):
+        self.sock.send("back".encode("utf-8"))
+        self.sock.recv(4096).decode("utf-8")
 
 client = Client("localhost", 12345)
 print(f"Conectado ao servidor na porta {client.port}")
@@ -233,9 +237,11 @@ try:
                 print("Digite 'Voltar' em qualquer campo para retornar ao menu anterior.")
                 userName = input("\nUsuario: ")
                 if userName.upper() == "VOLTAR":
+                    client.backToLoginChoice()
                     break
                 password = input("Senha: ")
                 if password.upper() == "VOLTAR":
+                    client.backToLoginChoice()
                     break
                 if loginChoice == "1":
                     responseCode = client.Validate_login(userName, password)

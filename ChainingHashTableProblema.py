@@ -16,15 +16,12 @@ class Entry:
         self.value = entryValue
         
     def __eq__(self, outroObjeto):
-        '''Método que vai possibilitar comparar chaves quando a chave for um objeto de outra classe'''
         return self.key == outroObjeto.key
     
     def __ne__(self, outroObjeto):
-        '''Método que vai possibilitar comparar chaves quando a chave for um objeto de outra classe'''
         return self.key != outroObjeto.key
     
     def __lt__(self, outroObjeto):
-        '''Método que vai possibilitar comparar chaves quando a chave for um objeto de outra classe'''
         return self.key < outroObjeto.key
     
     def __gt__(self, outro_objeto):
@@ -32,11 +29,9 @@ class Entry:
         return self.key > outro_objeto.key
 
     def __le__(self, outroObjeto):
-        '''Método que vai possibilitar comparar chaves quando a chave for um objeto de outra classe'''
         return self.key <= outroObjeto.key
     
     def __ge__(self, outroObjeto):
-        '''Método que vai possibilitar comparar chaves quando a chave for um objeto de outra classe'''
         return self.key >= outroObjeto.key
     
     def __str__( self )->str:

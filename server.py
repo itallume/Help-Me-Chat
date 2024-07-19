@@ -73,53 +73,60 @@ class Server:
         Ele trata os comandos de login e registro, autenticando as credenciais do cliente.
         Mmonitora o envio e recebimento de mensagens no chat, lidando com eventos como desconexões e comandos específicos que levam a ações como encerrar a comunicação. """
         while True:
-                try:
-                    msg_client = connection.recv(4096).decode("utf-8").split(" ")
-                    # criar um while para o login e cadastro
-                    if msg_client[0] == "login":   # fazer a tentativa maxima de 10 login por nome de usuário
-                        login = False
-                        for i in range(6):
-                            try:
-                                with self.Lock:
-                                    assert self.usersHashTable.get(msg_client[1]).confirmPassword(msg_client[2])  # com o metodo confirmPassword da classe User, faz a confirmação da senha
-                                    #assert not self.OnlineUsers.contains(msg_client[1])  #LANÇAR EXCEÇÃO
-
-                                    userObject = self.usersHashTable.get(msg_client[1])
-                                    self.OnlineUsers.put(msg_client[1], msg_client[1])
-                                connection.send("200".encode('utf-8'))
-                                login = True
+            try:
+                msg_client = connection.recv(4096).decode("utf-8").split(" ")
+                if msg_client == "back":
+                    connection.send("198".encode('utf-8'))
+                    continue
+                # criar um while para o login e cadastro
+                if msg_client[0] == "login":   # fazer a tentativa maxima de 10 login por nome de usuário
+                    username = msg_client[1]
+                    password = msg_client[2]
+                    login = False
+                    
+                    for i in range(6):
+                        code = self.loginVerification(username, password)
+                        connection.send(code.encode('utf-8'))
+                        if code == "200":
+                            userObject = self.usersHashTable.get(msg_client[1])
+                            self.OnlineUsers.put(msg_client[1], msg_client[1])
+                            login = True
+                            break
+                        else:
+                            msg_client = connection.recv(4096).decode("utf-8").split(" ")
+                            if msg_client == "back":
+                                connection.send("198".encode('utf-8'))
+                                login = None
                                 break
-                            except Exception as e:
-                                    connection.send("201".encode('utf-8'))
-                                    msg_client = connection.recv(4096).decode("utf-8").split(" ")
-                                    continue
-                        if login == False:
-                            connection.send("299".encode('utf-8'))
-                            connection.close()
-                            return
-                        break
-
-                 #Enviar codigo
-                    if msg_client[0] == "register":
-
-                        if self.usersHashTable.contains(msg_client[1]): # verifica se já existe algum usuário com o nome de usuário desejado
+                            username = msg_client[1]
+                            password = msg_client[2]
+                        continue
+                    if login == False:
+                        connection.send("299".encode('utf-8'))
+                        connection.close()
+                        return
+                    elif login == None:
+                        continue
+                    break
+             #Enviar codigo
+                if msg_client[0] == "register":
+                    with self.Lock:
+                        if self.usersHashTable.contains(msg_client[1]): 
                             connection.send("211".encode('utf-8'))
                             continue
-
                         userObject = User(msg_client[1], msg_client[2])
-                        with self.Lock:
-                            self.usersHashTable.put(msg_client[1], userObject) # abre o server
-                            self.OnlineUsers.put(msg_client[1], msg_client[1])
-                        connection.send("210".encode('utf-8'))
-                        self.usersHashTable.displayTable()
-                        print()
-                        break
-                except ConnectionResetError as e:
-                    print(f"Erro de conexão: {e}")
-                    connection.send("555".encode('utf-8')) #Enviar codigo
+                        self.usersHashTable.put(msg_client[1], userObject) # abre o server
+                        self.OnlineUsers.put(msg_client[1], msg_client[1])
+                    connection.send("210".encode('utf-8'))
+                    self.usersHashTable.displayTable()
+                    print()
+                    break
+            except ConnectionResetError as e:
+                print("Erro de conexão:", connection)
+                connection.close()
 
         while True:
-            
+            try:
                 msg_client = connection.recv(4096).decode("utf-8").split("&")
                 if msg_client[0] == "type":
                     if msg_client[1] == "undecided":                      
@@ -146,31 +153,9 @@ class Server:
                         self.councelorChat(chat, connection)
                         
                         break
-            
-        # while True:
-        #     try:
-        #         msg_client = connection.recv(4096).decode("utf-8").split("&") # receber a mensagem do cliente e separar o comando do texto
-        #         print(msg_client)
-        #      #Enviar codigo
-
-        #         if msg_client[0] == "msg":
-        #             if msg_client[1].lower() == 'exit': #subtituir por uma forma de que venha no cabeçalho, não é trabalho do usuário digitar isso, e sim do cliente achar uma maneira de notificar
-        #                 print(f"Desconectado: {userObject.nickname}")
-        #                 response = '250'
-        #                 for participants in chat.getClients():
-        #                     with self.Lock:
-        #                         self.OnlineUsers.remove(participants[0])
-        #                     participants[1].send(f"{response}".encode('utf-8')) #talvez cause bug
-        #                     connection.close()
-        #                 break
-
-        #             else:
-        #                 for participants in chat.getClients():
-
-        #                     participants[1].send(f"240&{userObject.nickname}: {msg_client[1]}".encode('utf-8'))
-
-        #     except ConnectionResetError as e:
-        #         print("Ouve um erro na conexão!")
+            except ConnectionResetError as e:
+                print("Erro de conexão, finalizando o chat: ", connection)
+                connection.close()
 
     def enterOnChat(self, connection, userObject):
        
@@ -187,8 +172,41 @@ class Server:
                             print("dps de remover: ", len(self.chats))
                             return chat
                     
+    def loginVerification(self, username:str, password:str) -> str:
+        with self.Lock:
+            try:
+                user = self.usersHashTable.get(username) 
+            except Exception:
+                return "201"
+            if not user.confirmPassword(password):
+                return "201"
+            if self.OnlineUsers.contains(user.nickname):
+                return "203"
+        return "200"
         
-
+    def handleLogin(self, connection, msg_client):
+        
+        username = msg_client[1]
+        password = msg_client[2]
+        loginAttempts = 6
+        for i in range(loginAttempts):
+            code = self.loginVerification(username, password)
+            connection.send(code.encode('utf-8'))
+            if code == "200":
+                # userObject = self.usersHashTable.get(msg_client[1])
+                self.OnlineUsers.put(username, username)
+                return True
+            else:
+                msg_client = connection.recv(4096).decode("utf-8").split(" ")
+                if msg_client == "back":
+                    connection.send("198".encode('utf-8'))
+                    return None
+                username = msg_client[1]
+                password = msg_client[2]
+        connection.send("299".encode('utf-8'))
+        connection.close()
+        return False   
+                
     def councelorChat(self, chat, connection):
         try:
             undecidedSocket = chat.undecided.socket
