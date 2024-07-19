@@ -80,8 +80,8 @@ class Server:
                     continue
                 
                 if msg_client[0] == "login":   
-                    userObject = None
-                    login = self.handleLogin(connection, msg_client, userObject)
+                    
+                    login = self.handleLogin(connection, msg_client)
                     if login:
                         break
                     elif login is None:
@@ -90,7 +90,7 @@ class Server:
                         return
                     
                 if msg_client[0] == "register":
-                    code = self.registerVerification(msg_client, userObject)
+                    code = self.registerVerification(msg_client)
                     connection.send(code.encode('utf-8'))
                     if code == "210":
                         break
@@ -103,7 +103,7 @@ class Server:
                 print("Erro de conexão: ", connection)
                 connection.close()
                 return
-                
+        userObject = self.usersHashTable.get(msg_client[1])       
         while True:
             try:
                 msg_client = connection.recv(4096).decode("utf-8").split("&")
@@ -120,7 +120,7 @@ class Server:
                             connection.send("233".encode('utf-8'))
                             continue
                         
-                        chat = Chat(msg_client[2], int(msg_client[3]))# cria um objeto chat com o assunto e a intensidad
+                        chat = Chat(subject, int(intensity))
                         chat.undecided = Undecided(userObject.nickname, connection)
                         with self.Lock:
                             self.chats.append(chat)
@@ -170,7 +170,7 @@ class Server:
                 return "203"
         return "200"
         
-    def handleLogin(self, connection, msg_client, userObject):
+    def handleLogin(self, connection, msg_client):
         
         username = msg_client[1]
         password = msg_client[2]
@@ -180,7 +180,6 @@ class Server:
             connection.send(code.encode('utf-8'))
             if code == "200":
                 self.OnlineUsers.put(username, username)
-                userObject = self.usersHashTable.get(username)
                 return True
             else:
                 msg_client = connection.recv(4096).decode("utf-8").split(" ")
@@ -193,12 +192,12 @@ class Server:
         connection.close()
         return False   
     
-    def registerVerification(self, msg_client, userObject) -> str:
+    def registerVerification(self, msg_client) -> str:
         username = msg_client[1]
         password = msg_client[2]
-        if len(username) > 0 and len(username) <= 20:
+        if len(username) < 3 or len(username) > 20:
             return "205"
-        if len(password) >= 6:
+        if len(password) < 6:
             return "207"
         
         with self.Lock:

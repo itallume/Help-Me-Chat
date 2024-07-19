@@ -34,13 +34,7 @@ class User:
         self.__quantidade_de_notas += 1
         self.__nota = self.__nota / self.__quantidade_de_notas 
 
-    def confirmPassword(self, password:str): 
-        """
-        Args:
-            password (str)
-        Returns:
-            Boll
-        """
+    def confirmPassword(self, password:str) -> bool: 
         return password == self.__password 
         
     def ChangeStatus(self):

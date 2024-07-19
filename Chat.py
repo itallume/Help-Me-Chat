@@ -41,13 +41,13 @@ class Chat:
         self.__intensity = intensity
         
     @staticmethod
-    def validateIntensity(self, intensity:str):
+    def validateIntensity( intensity:str) -> bool:
         if intensity not in ["1","2","3"]:
             return False
         return True 
     
     @staticmethod
-    def validateSubject(self, subject):
+    def validateSubject(subject:str) -> bool:
         if len(subject) < 2 or len(subject) >= 50:
             return False
         return True

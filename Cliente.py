@@ -21,7 +21,7 @@ class Client:
         "200": "login efetuado",
         "201": "Usuário ou senha incorreto",
         "203": "Usuário já está online",
-        "205": "Nome de usuário deve ser maior que 2 e menor que 20",
+        "205": "Nome de usuário deve ser maior que 3 e menor que 20",
         "207": "Senha deve ter no minimo 6 caracteres",
         "210": "Cadastro efetuado",
         "211": "Nome de usuário já existente, tente outro",
@@ -168,7 +168,7 @@ class Client:
         while True:
             response_server = self.sock.recv(4096).decode("utf-8").split("&")
             if not response_server[0] == "270":
-                print(response_server[1], ": ", response_server[2])
+                print(response_server)
             else:
                 print("VOCE FOI DESCONECTADO!!!")
                 self.conected = False 
