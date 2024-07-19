@@ -21,6 +21,8 @@ class Client:
         "200": "login efetuado",
         "201": "Usuário ou senha incorreto",
         "203": "Usuário já está online",
+        "205": "Nome de usuário deve ser maior que 2 e menor que 20",
+        "207": "Senha deve ter no minimo 6 caracteres",
         "210": "Cadastro efetuado",
         "211": "Nome de usuário já existente, tente outro",
         "220": "Tipo setado",

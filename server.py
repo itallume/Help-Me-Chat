@@ -78,8 +78,8 @@ class Server:
                 if msg_client == "back":
                     connection.send("198".encode('utf-8'))
                     continue
-                # criar um while para o login e cadastro
-                if msg_client[0] == "login":   # fazer a tentativa maxima de 10 login por nome de usuário
+                
+                if msg_client[0] == "login":   
                     userObject = None
                     login = self.handleLogin(connection, msg_client, userObject)
                     if login:
@@ -90,23 +90,19 @@ class Server:
                         return
                     
                 if msg_client[0] == "register":
-                    with self.Lock:
-                        if self.usersHashTable.contains(msg_client[1]): 
-                            connection.send("211".encode('utf-8'))
-                            continue
-                        userObject = User(msg_client[1], msg_client[2])
-                        self.usersHashTable.put(msg_client[1], userObject) # abre o server
-                        self.OnlineUsers.put(msg_client[1], msg_client[1])
-                    connection.send("210".encode('utf-8'))
-                    self.usersHashTable.displayTable()
-                    print()
-                    break
+                    code = self.registerVerification(msg_client, userObject)
+                    connection.send(code.encode('utf-8'))
+                    if code == "210":
+                        break
+                    
             except ConnectionResetError as e:
                 print("Erro de conexão:", connection)
                 connection.close()
+                return
             except OSError:
                 print("Erro de conexão: ", connection)
                 connection.close()
+                return
                 
         while True:
             try:
@@ -137,9 +133,11 @@ class Server:
             except ConnectionResetError:
                 print("Erro de conexão: ", connection)
                 connection.close()
+                return
             except OSError:
                 print("Erro de conexão: ", connection)
                 connection.close()
+                return
                 
     def enterOnChat(self, connection, userObject):
        
@@ -190,7 +188,25 @@ class Server:
         connection.send("299".encode('utf-8'))
         connection.close()
         return False   
-                
+    
+    def registerVerification(self, msg_client, userObject) -> str:
+        username = msg_client[1]
+        password = msg_client[2]
+        if len(username) > 0 and len(username) <= 20:
+            return "205"
+        if len(password) >= 6:
+            return "207"
+        
+        with self.Lock:
+            if self.usersHashTable.contains(username): 
+                return "211"
+            userObject = User(username, password)
+            self.usersHashTable.put(username, userObject)
+            self.OnlineUsers.put(msg_client[1], msg_client[1])
+        self.usersHashTable.displayTable()
+        print()   
+        return "210"
+    
     def councelorChat(self, chat, connection):
         try:
             undecidedSocket = chat.undecided.socket
