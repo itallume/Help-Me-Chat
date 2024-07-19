@@ -80,35 +80,15 @@ class Server:
                     continue
                 # criar um while para o login e cadastro
                 if msg_client[0] == "login":   # fazer a tentativa maxima de 10 login por nome de usuário
-                    username = msg_client[1]
-                    password = msg_client[2]
-                    login = False
-                    
-                    for i in range(6):
-                        code = self.loginVerification(username, password)
-                        connection.send(code.encode('utf-8'))
-                        if code == "200":
-                            userObject = self.usersHashTable.get(msg_client[1])
-                            self.OnlineUsers.put(msg_client[1], msg_client[1])
-                            login = True
-                            break
-                        else:
-                            msg_client = connection.recv(4096).decode("utf-8").split(" ")
-                            if msg_client == "back":
-                                connection.send("198".encode('utf-8'))
-                                login = None
-                                break
-                            username = msg_client[1]
-                            password = msg_client[2]
+                    userObject = None
+                    login = self.handleLogin(connection, msg_client, userObject)
+                    if login:
+                        break
+                    elif login is None:
                         continue
-                    if login == False:
-                        connection.send("299".encode('utf-8'))
-                        connection.close()
+                    else:
                         return
-                    elif login == None:
-                        continue
-                    break
-             #Enviar codigo
+                    
                 if msg_client[0] == "register":
                     with self.Lock:
                         if self.usersHashTable.contains(msg_client[1]): 
@@ -124,7 +104,10 @@ class Server:
             except ConnectionResetError as e:
                 print("Erro de conexão:", connection)
                 connection.close()
-
+            except OSError:
+                print("Erro de conexão: ", connection)
+                connection.close()
+                
         while True:
             try:
                 msg_client = connection.recv(4096).decode("utf-8").split("&")
@@ -143,8 +126,6 @@ class Server:
                         while chat.counselor is None:
                             time.sleep(0.2)    
                         self.undecidedChat(chat, connection)
-                        # usar lock
-                        #threading.Thread(target= self.matchClients, args=(chat, userObject)).start()
                         break
                     
                     if msg_client[1] == "counselor":
@@ -153,10 +134,13 @@ class Server:
                         self.councelorChat(chat, connection)
                         
                         break
-            except ConnectionResetError as e:
-                print("Erro de conexão, finalizando o chat: ", connection)
+            except ConnectionResetError:
+                print("Erro de conexão: ", connection)
                 connection.close()
-
+            except OSError:
+                print("Erro de conexão: ", connection)
+                connection.close()
+                
     def enterOnChat(self, connection, userObject):
        
         while True:
@@ -184,7 +168,7 @@ class Server:
                 return "203"
         return "200"
         
-    def handleLogin(self, connection, msg_client):
+    def handleLogin(self, connection, msg_client, userObject):
         
         username = msg_client[1]
         password = msg_client[2]
@@ -193,8 +177,8 @@ class Server:
             code = self.loginVerification(username, password)
             connection.send(code.encode('utf-8'))
             if code == "200":
-                # userObject = self.usersHashTable.get(msg_client[1])
                 self.OnlineUsers.put(username, username)
+                userObject = self.usersHashTable.get(username)
                 return True
             else:
                 msg_client = connection.recv(4096).decode("utf-8").split(" ")
