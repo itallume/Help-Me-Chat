@@ -108,13 +108,18 @@ class Server:
             try:
                 msg_client = connection.recv(4096).decode("utf-8").split("&")
                 if msg_client[0] == "type":
-                    if msg_client[1] == "undecided":                      
-                        if msg_client[3] not in ["1","2","3"]:
+                    if msg_client[1] == "undecided":  
+                        subject = msg_client[2]  
+                        intensity = msg_client[3]
+                        
+                        if not Chat.validateIntensity(intensity):
                             connection.send("231".encode('utf-8'))
                             continue
-                        if len(msg_client[2]) < 2:
+                        
+                        if not Chat.validateSubject(subject):
                             connection.send("233".encode('utf-8'))
                             continue
+                        
                         chat = Chat(msg_client[2], int(msg_client[3]))# cria um objeto chat com o assunto e a intensidad
                         chat.undecided = Undecided(userObject.nickname, connection)
                         with self.Lock:
@@ -128,7 +133,6 @@ class Server:
                         # fazer as de solicitações de escolha de chat para o conselheiro
                         chat = self.enterOnChat(connection, userObject)
                         self.councelorChat(chat, connection)
-                        
                         break
             except ConnectionResetError:
                 print("Erro de conexão: ", connection)

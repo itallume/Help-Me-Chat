@@ -40,6 +40,17 @@ class Chat:
     def intensity(self, intensity:int):
         self.__intensity = intensity
         
-        
+    @staticmethod
+    def validateIntensity(self, intensity:str):
+        if intensity not in ["1","2","3"]:
+            return False
+        return True 
+    
+    @staticmethod
+    def validateSubject(self, subject):
+        if len(subject) < 2 or len(subject) >= 50:
+            return False
+        return True
+    
     def __str__(self) -> str:
         return f"""[Subject: {self.__subject}, Intensity: {self.__intensity}, Counselor username: {self.__counselor.username}, Undecided username: {self.__undecided.username}]"""
