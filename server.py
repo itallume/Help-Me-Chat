@@ -7,18 +7,17 @@ from Chat import Chat
 import time
 from Undecided import Undecided
 from Counselor import Counselor
+from Exceptions import *
 
 class Server:
     def __init__(self, adress:str , porta:int):
         self.adress = adress
         self.port = porta
-        self.usersHashTable = ChainingHashTable(20)
-        self.AllChats = ChainingHashTable(20)
-        self.arvore = BinarySearchTree()
+        self.users = ChainingHashTable(20)
         self.MinNote = self.setDictionary()
         self.Lock = threading.Lock()
         self.OnlineUsers = ChainingHashTable(20)
-        self.chats = []
+        self.chats = self.setChats()
 
     def setDictionary(self):
         """ Atribui ao atributo MinNote da classe o dicionário que
@@ -35,6 +34,35 @@ class Server:
             3: 6
         }
 
+    def setChats(self):
+        return {
+            1: [],
+            2: [],
+            3: []
+        }
+    
+    def addChat(self, intensity:int, chat:Chat) -> None:
+        if intensity in self.chats:
+            self.chats[intensity].append(chat)
+        else:
+            raise InvalidIntensity(f"Invalid Intensity: {intensity}")
+    
+    def removeChat(self, intensity:int, chat:Chat) -> None:
+        if intensity in self.chats:
+            if chat in self.chats[intensity]:
+                self.chats[intensity].remove(chat)
+            else:
+                raise InvalidChat("the chat does not exist")
+        else:
+            raise InvalidIntensity(f"Invalid Intensity: {intensity}")
+    
+    def getIntensityWithNote(self, note:float) -> int:
+        if note < 3:
+            return 1
+        if note < 6:
+            return 2
+        return 3
+
     def start_server(self):
         """
         `start_server` é um método responsável por iniciar o servidor. Ele configura o dicionário de notas mínimas chamando o método `setDictionary,
@@ -44,7 +72,7 @@ class Server:
         Esse método é responsável por aceitar novas conexões de clientes e iniciar uma nova thread para lidar com a comunicação com cada cliente. O loop continua indefinidamente para aceitar várias conexões consecutivas.
         """
         UserObject1 = User("itallo", "123456")
-        self.usersHashTable.put(UserObject1.nickname, UserObject1) # abre o server
+        self.users.put(UserObject1.nickname, UserObject1) # abre o server
         clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         clientSocket.bind(("0.0.0.0", self.port))
         clientSocket.listen()
@@ -103,7 +131,7 @@ class Server:
                 print("Erro de conexão: ", connection)
                 connection.close()
                 return
-        userObject = self.usersHashTable.get(msg_client[1])       
+        userObject = self.users.get(msg_client[1])       
         while True:
             try:
                 msg_client = connection.recv(4096).decode("utf-8").split("&")
@@ -134,6 +162,7 @@ class Server:
                         chat = self.enterOnChat(connection, userObject)
                         self.councelorChat(chat, connection)
                         break
+                    
             except ConnectionResetError:
                 print("Erro de conexão: ", connection)
                 connection.close()
@@ -143,7 +172,7 @@ class Server:
                 connection.close()
                 return
                 
-    def enterOnChat(self, connection, userObject):
+    def enterOnChat(self, connection, userObject): #MELHORAR ISSO AQUI
        
         while True:
             with self.Lock:
@@ -161,7 +190,7 @@ class Server:
     def loginVerification(self, username:str, password:str) -> str:
         with self.Lock:
             try:
-                user = self.usersHashTable.get(username) 
+                user = self.users.get(username) 
             except Exception:
                 return "201"
             if not user.confirmPassword(password):
@@ -201,13 +230,11 @@ class Server:
             return "207"
         
         with self.Lock:
-            if self.usersHashTable.contains(username): 
+            if self.users.contains(username): 
                 return "211"
             userObject = User(username, password)
-            self.usersHashTable.put(username, userObject)
-            self.OnlineUsers.put(msg_client[1], msg_client[1])
-        self.usersHashTable.displayTable()
-        print()   
+            self.users.put(username, userObject)
+            self.OnlineUsers.put(msg_client[1], msg_client[1]) 
         return "210"
     
     def councelorChat(self, chat, connection):

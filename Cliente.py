@@ -59,52 +59,16 @@ class Client:
         if serverResponse == "299":
             self.sock.close()
         return serverResponse
-    
-        # if validate_login[0] == "200": 
-        #     print(validate_login) #Login efetuado com Sucesso!
-        
-        # if validate_login[0] == "299": 
-        #     print(validate_login)
-        #     self.Validate_login()
-
-        # while validate_login[0] == "201":
-        #      #translate bug 
-        #     print(self.CodesTranslate[validate_login[0]]) #Login nao efetuado, Usuário ou Senha incorretos!
-        #     self.Validate_login()
-        
-        # print(f"Servidor: {validate_login}")
-        # print("1. Indeciso(a)\n2. Conselheiro")
-        # self.set_type()
 
     def Validate_register(self, userName, password):
-        """
-        `Validate_register` inicia o processo de registro, envia as informações ao servidor, trata diferentes códigos de resposta e,
-          em caso de sucesso, permite ao usuário escolher entre ser um Indeciso(a) ou Conselheiro(a), chamando `set_type`. 
-          Em caso de falha (nome de usuário já existente), solicita novas informações de registro.
-        """
+        
         signup = f"register {userName} {password}"
         self.sock.send(signup.encode("utf-8"))
         validate_signup = self.sock.recv(4096).decode("utf-8")
         return validate_signup
     
-        # if validate_signup[0] == "210":
-        #     print("\n",self.CodesTranslate[validate_signup[0]]) #Cadastro efetuado com Sucesso!
-            
-        # while validate_signup[0] == "211": 
-        #     print("\n",self.CodesTranslate[validate_signup[0]])
-        #     print("Tente Novamente\n") #Nome de Usuario ja Existente, tente novamente!
-        #     self.Validate_register()
-        
-        # print(f"Servidor: {validate_signup}")
-        # print("1. Indeciso(a)\n2. Conselheiro(a)")
-        # self.set_type(validate_signup)
-        
     def setTypeCounselor(self) -> str:
-        """
-        `set_type` permite ao usuário escolher entre ser Indeciso(a) ou Conselheiro(a). 
-        Em seguida, solicita informações adicionais conforme a escolha do usuário (assunto ou espera por um(a) Indeciso(a)), 
-        chamando métodos apropriados como `set_assunto` ou `waitingConnection`.
-        """
+       
         self.sock.send(f"type&counselor".encode("utf-8"))
         response_server = self.sock.recv(4096).decode("utf-8")
         return response_server
@@ -114,23 +78,9 @@ class Client:
         self.sock.send(f"type&undecided&{subject}&{intensity}".encode("utf-8"))
         response_server = self.sock.recv(4096).decode("utf-8")
         return response_server
-        
-        if response_server[0] == "231":
-            print(self.CodesTranslate[response_server[0]])
-            self.set_intensity(assunto, self.sock)
-        else:
-            print("\nProcurando por um(a) Indeciso(a)...\n")
-            self.waitingConnection(response_server)
-            return
 
-
-        
     def set_assunto(self):
-        """
-        `set_assunto` solicita ao usuário que forneça um assunto. 
-        Verifica se o assunto tem mais de 3 caracteres e, se não, solicita novamente. 
-        Em seguida, pede ao usuário que escolha a intensidade do assunto e chama o método `set_intensity` passando o assunto como argumento.
-        """
+        
         try:
             assert len(assunto) > 0
             if len(assunto) <= 3:
@@ -144,12 +94,6 @@ class Client:
         return
         
     def waitingConnection(self, response_server):   
-        """
-        `waitingConnection` é responsável por lidar com a resposta do servidor após solicitar a criação de um chat ou ao entrar em um chat existente. 
-        Se o código da resposta for "270" (indicação de sucesso na criação ou entrada no chat), imprime informações sobre o chat (assunto e intensidade), 
-        define `conected` como True (indicando que o cliente está conectado ao chat) e inicia uma nova thread para escutar mensagens do chat (`escutar`). 
-        Em seguida, chama o método `DigitOnchat` para permitir que o usuário envie mensagens para o chat.
-        """
 
         if response_server[0] == "270":
             print(response_server[0], f"Assunto: {response_server[1]} Intensidade: {response_server[2]}")
@@ -159,12 +103,6 @@ class Client:
             self.DigitOnchat()
             
     def escutar(self):
-        """
-        `escutar` é um método responsável por ouvir as mensagens do servidor. 
-        Ele executa em um loop infinito, recebendo mensagens do servidor, as dividindo usando "&" como delimitador e, em seguida, 
-        verificando o código da mensagem. Se o código não for "250" (indicando que a mensagem não é uma indicação de desconexão), imprime o conteúdo da mensagem. 
-        Se o código for "250", significa que o cliente foi desconectado do chat, então o método imprime a mensagem correspondente e define `conected` como False, encerrando o loop.
-        """
         while True:
             response_server = self.sock.recv(4096).decode("utf-8").split("&")
             if not response_server[0] == "270":
@@ -175,47 +113,12 @@ class Client:
                 break
             
     def DigitOnchat(self):
-        """
-        `DigitOnchat` é um método responsável por permitir que o usuário envie mensagens para o servidor enquanto estiver conectado ao chat. 
-        Ele permanece em um loop enquanto `conected` for verdadeiro, aguardando a entrada do usuário e enviando a mensagem para o servidor formatada com o código "msg". 
-        Este método é interrompido quando o usuário decide encerrar o chat ou é desconectado do servidor.
-        """
+    
         while True: 
             if self.conected:
                 break
             msg = input(">> ")
             self.sock.send(f"msg&{msg}".encode("utf-8"))
-
-    def login(self): 
-        """
-        `login` é um método responsável por coletar as credenciais do usuário (nome de usuário e senha) e formar uma mensagem de login que será enviada ao servidor. 
-        Ele fica em um loop até que as credenciais sejam fornecidas corretamente, ou o usuário decida voltar ao menu anterior digitando "Voltar". 
-        O método retorna a mensagem de login formatada.
-        """
-
-    def signin(self):
-        """
-        `signin` é um método responsável por coletar informações do usuário durante o processo de registro (nome de usuário e senha). 
-        Ele valida se o nome de usuário e a senha atendem aos critérios especificados (comprimento mínimo) e retorna a mensagem de registro formatada para ser enviada ao servidor. 
-        O método permite que o usuário digite "Voltar" para retornar ao menu anterior durante a entrada de informações.
-        """
-        try:
-           # print("Digite 'Voltar' para retornar ao menu anterior.")
-            user = input("\nUsuario: ")
-           # if user.upper() == "VOLTAR":
-            #    self.validate_choice()
-                
-            password = input("Senha: ")
-            #if password.upper == "VOLTAR":
-            #    self.validate_choice()
-                
-            assert len(password) >= 6
-            assert len(user) > 0 and len(user) <= 20
-        except Exception:
-            #print("\nA senha deve conter 6 ou mais caracteres e o Usuario deve conter 1 ou mais caracteres!\n")
-            return self.signin()
-        response = f"register {user} {password}"
-        return response
 
     def backToLoginChoice(self):
         self.sock.send("back".encode("utf-8"))
