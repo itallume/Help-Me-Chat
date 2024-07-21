@@ -41,13 +41,13 @@ class Server:
             3: []
         }
     
-    def addChat(self, intensity:int, chat:Chat) -> None:
+    def addChatToPublicList(self, intensity:int, chat:Chat) -> None:
         if intensity in self.chats:
             self.chats[intensity].append(chat)
         else:
             raise InvalidIntensity(f"Invalid Intensity: {intensity}")
     
-    def removeChat(self, intensity:int, chat:Chat) -> None:
+    def removeChatFromPublicList(self, intensity:int, chat:Chat) -> None:
         if intensity in self.chats:
             if chat in self.chats[intensity]:
                 self.chats[intensity].remove(chat)
@@ -131,6 +131,11 @@ class Server:
                 print("Erro de conexão: ", connection)
                 connection.close()
                 return
+            except Exception:
+                connection.send("555".encode('utf-8'))
+                connection.close()
+                return
+            
         userObject = self.users.get(msg_client[1])       
         while True:
             try:
@@ -151,7 +156,8 @@ class Server:
                         chat = Chat(subject, int(intensity))
                         chat.undecided = Undecided(userObject.nickname, connection)
                         with self.Lock:
-                            self.chats.append(chat)
+                            self.addChatToPublicList(int(intensity), chat)
+                
                         while chat.counselor is None:
                             time.sleep(0.2)    
                         self.undecidedChat(chat, connection)
@@ -171,16 +177,25 @@ class Server:
                 print("Erro de conexão: ", connection)
                 connection.close()
                 return
-                
+            except Exception:
+                connection.send("555".encode('utf-8'))
+                connection.close()
+                return
+            
     def enterOnChat(self, connection, userObject): #MELHORAR ISSO AQUI
-       
+        equivalentIntensity = self.getIntensityWithNote(userObject.note)
         while True:
             with self.Lock:
-                if len(self.chats) == 0:           
+                if len(self.chats[equivalentIntensity]) == 0:           
                     time.sleep(0.2)
                 else:
+                    chat = self.chats[equivalentIntensity][0]
+                    chat.counselor = Counselor(userObject.nickname, connection)
+                    self.removeChatFromPublicList(equivalentIntensity, chat)
+                    return chat
+                
                     for chat in self.chats:
-                        if userObject.nota >= self.MinNote[chat.intensity]:
+                        if userObject.note >= self.MinNote[chat.intensity]:
                             chat.counselor = Counselor(userObject.nickname, connection)
                             print("antes de remover: ", len(self.chats))
                             self.chats.remove(chat)

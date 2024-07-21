@@ -2,8 +2,8 @@ class User:
     def __init__(self, nickname, password):
         self.__nickname = nickname
         self.__password = password
-        self.__quantidade_de_notas = 0
-        self.__nota = 10
+        self.__numberOfNotes = 0
+        self.__note = 10
         self.__status = "Offline"
         
         
@@ -12,8 +12,8 @@ class User:
         return self.__nickname
     
     @property
-    def nota(self):
-        return self.__nota
+    def note(self):
+        return self.__note
     
     @property
     def chat(self):
@@ -27,12 +27,12 @@ class User:
     def chat(self, newchat):
         self.__chat = newchat
     
-    def addNota(self, new_nota):
-        if self.__quantidade_de_notas == 0:
-            self.__nota = 0
-        self.__nota += new_nota
-        self.__quantidade_de_notas += 1
-        self.__nota = self.__nota / self.__quantidade_de_notas 
+    def addnote(self, new_note):
+        if self.__numberOfNotes == 0:
+            self.__note = 0
+        self.__note += new_note
+        self.__numberOfNotes += 1
+        self.__note = self.__note / self.__numberOfNotes 
 
     def confirmPassword(self, password:str) -> bool: 
         return password == self.__password 
@@ -47,12 +47,12 @@ class User:
         
     def __eq__(self, outroObjeto):
         '''Método que vai possibilitar comparar chaves quando a chave for um objeto de outra classe'''
-        return self.nota == outroObjeto.nota
+        return self.note == outroObjeto.note
 
     def __lt__(self, outroObjeto):
         '''Método que vai possibilitar comparar chaves quando a chave for um objeto de outra classe'''
-        return self.nota < outroObjeto.nota
+        return self.note < outroObjeto.note
     
     def __gt__(self, outro_objeto):
         '''Método que possibilita comparar chaves quando a chave for um objeto de outra classe'''
-        return self.nota > outro_objeto.nota
+        return self.note > outro_objeto.note

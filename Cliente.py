@@ -2,6 +2,7 @@ import socket
 import threading 
 import socket
 import threading
+import sys
 from Exceptions import *
 
 class Client:
@@ -106,7 +107,10 @@ class Client:
         while True:
             response_server = self.sock.recv(4096).decode("utf-8").split("&")
             if not response_server[0] == "270":
-                print(response_server)
+                  # Limpa a linha atual
+                sys.stdout.write(f"{response_server}\n")  # Imprime a mensagem
+                sys.stdout.write(">> ")  # Reposiciona o prompt de input
+                sys.stdout.flush()
             else:
                 print("VOCE FOI DESCONECTADO!!!")
                 self.conected = False 
