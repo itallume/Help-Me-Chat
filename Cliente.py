@@ -28,6 +28,8 @@ class Client:
         "211": "Nome de usuário já existente, tente outro",
         "220": "Tipo setado",
         "221": "Tipo inexistente",
+        "222": "Escolha o chat que deseja entrar",
+        "223": "O chat escolhido não está mais diponivel, escolha outro",
         "230": "Tema definido",
         "231": "Intensidade inexistente", 
         "233": "Assunto inválido",
@@ -207,8 +209,16 @@ try:
                     break
                 #fazer parte de conectar no chat          
         else:
-            responseCode = client.setTypeCounselor()
-            print(responseCode)
+            response = client.setTypeCounselor().split("&")
+            print(response)
+            responseCode = response[0]
+            print(client.getTranslate(responseCode))
+            
+            if responseCode == "222":
+                for chat in response:
+                    if chat == "222":
+                        continue
+                    print(chat)
             threading.Thread(target=client.escutar, args=()).start()
             client.DigitOnchat()
             break

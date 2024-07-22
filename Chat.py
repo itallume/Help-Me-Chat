@@ -1,13 +1,19 @@
 import Undecided
 import Counselor
+import uuid
 class Chat:
     def __init__(self, subject:str, intensity:int):
+        self.__id = uuid.uuid1().int
         self.__subject = subject
         self.__intensity = intensity
         self.__undecided = None
         self.__counselor = None
         
 
+    @property
+    def id(self) -> int:
+        return self.__id
+    
     @property
     def undecided(self) -> Undecided:
         return self.__undecided
@@ -53,4 +59,4 @@ class Chat:
         return True
     
     def __str__(self) -> str:
-        return f"""Subject:\n{self.__subject},Intensity: {self.__intensity},Undecided username: {self.__undecided.username}"""
+        return f"""Subject:\n{self.__subject},Intensity: {self.__intensity},Undecided username: {self.__undecided.username}, Id: {self.__id}"""

@@ -41,17 +41,6 @@ class Server:
             3: []
         }
     
-    def getTextChats(self, intensity:int) -> str:
-        textChats = ""
-        if intensity in self.chats:
-            for i in range(intensity, 0, -1):
-                for chat in self.chats[i]:
-                    textChats += str(chat)
-            return 
-        else:
-            raise InvalidIntensity("Invalid Intensity: {intensity}")
-        
-    
     def addChatToPublicList(self, intensity:int, chat:Chat) -> None:
         if intensity in self.chats:
             self.chats[intensity].append(chat)
@@ -66,12 +55,31 @@ class Server:
                 raise InvalidChat("the chat does not exist")
         else:
             raise InvalidIntensity(f"Invalid Intensity: {intensity}")
-    
+
+    def getInformationChats(self, intensity:int) -> str:
+        textChats = ""
+        
+        if intensity in self.chats:
+            for i in range(intensity, 0, -1):
+                with self.Lock:
+                    for chat in self.chats[i]:
+                        textChats += "\n" + str(chat) + "\n &"
+            return textChats
+        else:
+            raise InvalidIntensity(f"Invalid Intensity: {intensity}")
+            
+    def getChatByIdFromPublicList(self, chatId:int, intensity) -> Chat:
+        if intensity in self.chats:
+            for i in range(intensity, 0, -1):
+                    with self.Lock:
+                        for chat in self.chats[i]:
+                            if chat.id == chatId:
+                                self.removeChatFromPublicList(i, chat)
+                                return chat
+            return None
+        else:
+            raise InvalidIntensity(f"Invalid Intensity: {intensity}")
     def getIntensityWithNote(self, note:float) -> int:
-        if note < 3:
-            return 1
-        if note < 6:
-            return 2
         return 3
 
     def start_server(self):
@@ -114,7 +122,9 @@ class Server:
         while True:
             try:
                 msg_client = connection.recv(4096).decode("utf-8").split(" ")
-                if msg_client == "back":
+                
+                if msg_client[0] == "back":
+                    
                     connection.send("198".encode('utf-8'))
                     continue
                 
@@ -196,22 +206,23 @@ class Server:
     def enterOnChat(self, connection, userObject): #MELHORAR ISSO AQUI
         equivalentIntensity = self.getIntensityWithNote(userObject.note)
         while True:
+            chatsInformations = None
             with self.Lock:
                 if len(self.chats[equivalentIntensity]) == 0:           
                     time.sleep(0.2)
-                else:
-                    chat = self.chats[equivalentIntensity][0]
-                    chat.counselor = Counselor(userObject.nickname, connection)
-                    self.removeChatFromPublicList(equivalentIntensity, chat)
-                    return chat
-                
-                    for chat in self.chats:
-                        if userObject.note >= self.MinNote[chat.intensity]:
-                            chat.counselor = Counselor(userObject.nickname, connection)
-                            print("antes de remover: ", len(self.chats))
-                            self.chats.remove(chat)
-                            print("dps de remover: ", len(self.chats))
-                            return chat
+                    continue  
+        
+            chatsInformations = self.getInformationChats(equivalentIntensity)    
+            connection.send(f"222&{chatsInformations}".encode('utf-8'))
+            while True:
+                chatId = connection.recv(4096).decode("utf-8")
+                chat = self.getChatByIdFromPublicList(int(chatId), equivalentIntensity)
+                if chat is None:
+                    chatsInformations = self.getInformationChats(equivalentIntensity)
+                    connection.send(f"223{chatsInformations}".encode('utf-8'))
+                    continue
+                chat.counselor = Counselor(userObject.nickname, connection)
+                return chat
                     
     def loginVerification(self, username:str, password:str) -> str:
         with self.Lock:
