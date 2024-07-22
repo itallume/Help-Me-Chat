@@ -1,10 +1,11 @@
 #Servidor 
 
 [X] Isolar os escopos de conversa para conselheiros e indecisos 
-[ ] Parar de usar lista para armazenar alguns dados da classe
+[X] Parar de usar lista para armazenar alguns dados da classe
 [X] Classes para indeciso e conselheiro, para melhor gerenciamento no chat
 [X] Melhorar as exceções de disconect
 [ ] resolver alto tempo de espera para cadastro
+[ ] investigar o motivo de um bug que o servidor manda infitamente ['']
 
 #cliente
 

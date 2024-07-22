@@ -53,4 +53,4 @@ class Chat:
         return True
     
     def __str__(self) -> str:
-        return f"""[Subject: {self.__subject}, Intensity: {self.__intensity}, Counselor username: {self.__counselor.username}, Undecided username: {self.__undecided.username}]"""
+        return f"""Subject:\n{self.__subject},Intensity: {self.__intensity},Undecided username: {self.__undecided.username}"""

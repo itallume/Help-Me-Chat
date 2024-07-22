@@ -108,7 +108,7 @@ class Client:
             response_server = self.sock.recv(4096).decode("utf-8").split("&")
             if not response_server[0] == "270":
                   # Limpa a linha atual
-                sys.stdout.write(f"{response_server}\n")  # Imprime a mensagem
+                sys.stdout.write(f"\r{response_server}\n")  # Imprime a mensagem
                 sys.stdout.write(">> ")  # Reposiciona o prompt de input
                 sys.stdout.flush()
             else:

@@ -19,7 +19,7 @@ class Server:
         self.OnlineUsers = ChainingHashTable(20)
         self.chats = self.setChats()
 
-    def setDictionary(self):
+    def setDictionary(self) -> dict:
         """ Atribui ao atributo MinNote da classe o dicionário que
             contém a nota minima para entrar em um chat
             com base nas intensidades 1, 2 e 3.
@@ -34,12 +34,23 @@ class Server:
             3: 6
         }
 
-    def setChats(self):
+    def setChats(self) -> dict:
         return {
             1: [],
             2: [],
             3: []
         }
+    
+    def getTextChats(self, intensity:int) -> str:
+        textChats = ""
+        if intensity in self.chats:
+            for i in range(intensity, 0, -1):
+                for chat in self.chats[i]:
+                    textChats += str(chat)
+            return 
+        else:
+            raise InvalidIntensity("Invalid Intensity: {intensity}")
+        
     
     def addChatToPublicList(self, intensity:int, chat:Chat) -> None:
         if intensity in self.chats:
