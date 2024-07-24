@@ -210,7 +210,6 @@ try:
                 #fazer parte de conectar no chat          
         else:
             response = client.setTypeCounselor().split("&")
-            print(response)
             responseCode = response[0]
             print(client.getTranslate(responseCode))
             
@@ -219,6 +218,7 @@ try:
                     if chat == "222":
                         continue
                     print(chat)
+            input("Escolha um chat: ")
             threading.Thread(target=client.escutar, args=()).start()
             client.DigitOnchat()
             break

@@ -12,3 +12,4 @@
 [-] Implementar o main 
 [ ] Ajustar os métodos
 [ ] melhorias em feedback
+[ ] melhorar interface do cliente
