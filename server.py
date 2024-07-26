@@ -58,12 +58,12 @@ class Server:
 
     def getInformationChats(self, intensity:int) -> str:
         textChats = ""
-        
         if intensity in self.chats:
             for i in range(intensity, 0, -1):
                 with self.Lock:
                     for chat in self.chats[i]:
-                        textChats += "\n" + str(chat) + "\n &"
+                        textChats += f"{str(chat)}&"
+            textChats = textChats[:-1]
             return textChats
         else:
             raise InvalidIntensity(f"Invalid Intensity: {intensity}")

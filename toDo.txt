@@ -10,6 +10,6 @@
 #cliente
 
 [-] Implementar o main 
-[ ] Ajustar os métodos
+[X] Ajustar os métodos
 [ ] melhorias em feedback
-[ ] melhorar interface do cliente
+[-] melhorar interface do cliente
