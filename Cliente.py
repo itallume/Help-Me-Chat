@@ -130,6 +130,14 @@ class Client:
         self.sock.send("back".encode("utf-8"))
         self.sock.recv(4096).decode("utf-8")
 
+    def chooseChat(self, chat:str):
+        print(chat)
+        id = chat.split("Id: ")[1].split(',')[0].strip()
+        print(id)
+        self.sock.send(f"{id}".encode("utf-8"))
+        response_server = self.sock.recv(4096).decode("utf-8")
+        return response_server
+    
 client = Client("localhost", 12345)
 print(f"Conectado ao servidor na porta {client.port}")
 print("\n\n=============Bem-Vindo ao Conselheiro Virtual!=============\n")
@@ -212,13 +220,14 @@ try:
             response = client.setTypeCounselor().split("&")
             responseCode = response[0]
             print(client.getTranslate(responseCode))
-            
             if responseCode == "222":
-                for chat in response:
-                    if chat == "222":
-                        continue
-                    print(chat)
-            input("Escolha um chat: ")
+                for i in range(1, len(response), 1):
+                    print("="*20)
+                    print(f"{i} - {response[i].split('Id: ')[0]}")
+                    print("="*20)
+            chatNumber = int(input(f"Escolha um chat entre 1 e {len(response) - 1}: "))
+            client.chooseChat(response[chatNumber])
+            
             threading.Thread(target=client.escutar, args=()).start()
             client.DigitOnchat()
             break
